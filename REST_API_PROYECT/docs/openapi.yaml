@@ -1,0 +1,395 @@
+openapi: 3.0.3
+
+info:
+  title: API de Jugadores y Rosters
+  description: API REST para gestionar jugadores de eSports y armar rosters.
+  version: 1.0.0
+
+servers:
+  - url: /api/v1
+    description: Servidor actual
+
+tags:
+  - name: Jugadores
+    description: Gestión de jugadores
+  - name: Rosters                       # NUEVO
+    description: Gestión de rosters
+  - name: Asignaciones                  # NUEVO
+    description: Jugadores dentro de un roster (Titular o Suplente)
+  - name: Auxiliares
+    description: Endpoints de apoyo y verificación
+
+paths:
+  # ---------------------------- JUGADORES ----------------------------
+  /jugadores:
+    get:
+      tags: [Jugadores]
+      summary: Listar jugadores
+      description: Devuelve todos los jugadores ordenados por nickname. Admite filtros opcionales que se pueden combinar.
+      parameters:
+        - name: rol
+          in: query
+          description: Filtrar por rol
+          schema:
+            $ref: '#/components/schemas/RolJugador'
+        - name: estado
+          in: query
+          description: Filtrar por estado
+          schema:
+            $ref: '#/components/schemas/EstadoJugador'
+        - name: search
+          in: query
+          description: Buscar por nickname (coincidencia parcial)
+          schema:
+            type: string
+            example: fak
+      responses:
+        '200':
+          description: Lista de jugadores (puede estar vacía)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/Jugador'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+
+    post:
+      tags: [Jugadores]
+      summary: Crear un jugador
+      description: Registra un jugador nuevo. El nickname debe ser único.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JugadorNuevo'
+      responses:
+        '201':
+          description: Jugador creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Jugador'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '409':
+          $ref: '#/components/responses/Conflicto'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+
+  /jugadores/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdJugador'
+
+    get:
+      tags: [Jugadores]
+      summary: Obtener el detalle de un jugador
+      responses:
+        '200':
+          description: Datos del jugador
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Jugador'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+
+    put:
+      tags: [Jugadores]
+      summary: Actualizar un jugador
+      description: Modifica uno o varios campos. Los campos que no se envíen no cambian.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/JugadorActualizacion'
+      responses:
+        '200':
+          description: Jugador actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Jugador'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '409':
+          $ref: '#/components/responses/Conflicto'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+
+    delete:
+      tags: [Jugadores]
+      summary: Eliminar un jugador
+      description: Elimina al jugador y también sus asignaciones a rosters. Los rosters no se eliminan.
+      responses:
+        '204':
+          description: Jugador eliminado (sin contenido)
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+
+  # ----------------------------- ROSTERS (NUEVO) -----------------------------
+  /rosters:
+    get:
+      tags: [Rosters]
+      summary: Listar rosters
+      description: Devuelve todos los rosters con la cantidad de jugadores asignados. Admite filtros opcionales que se pueden combinar.
+      parameters:
+        - name: tipo
+          in: query
+          description: Filtrar por tipo de roster
+          schema:
+            $ref: '#/components/schemas/TipoRoster'
+        - name: temporada
+          in: query
+          description: Filtrar por temporada
+          schema:
+            type: string
+            example: '2026'
+      responses:
+        '200':
+          description: Lista de rosters (puede estar vacía)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RosterResumen'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+
+    post:
+      tags: [Rosters]
+      summary: Crear un roster
+      description: Crea un roster vacío. Si no se envía el juego, se guarda League of Legends.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RosterNuevo'
+      responses:
+        '201':
+          description: Roster creado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Roster'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+
+  /rosters/{id}:
+    parameters:
+      - $ref: '#/components/parameters/IdRoster'
+
+    get:
+      tags: [Rosters]
+      summary: Obtener el detalle de un roster
+      description: Devuelve los datos del roster junto con la lista de sus jugadores y el rol de cada uno dentro del roster.
+      responses:
+        '200':
+          description: Roster con sus jugadores
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RosterDetalle'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+
+    put:
+      tags: [Rosters]
+      summary: Actualizar un roster
+      description: Modifica uno o varios campos. Los campos que no se envíen no cambian.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RosterActualizacion'
+      responses:
+        '200':
+          description: Roster actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Roster'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+
+    delete:
+      tags: [Rosters]
+      summary: Eliminar un roster
+      description: Elimina el roster y sus asignaciones. Los jugadores permanecen en el sistema.
+      responses:
+        '204':
+          description: Roster eliminado (sin contenido)
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+
+  # ------------------------- ASIGNACIONES (NUEVO) -------------------------
+  /rosters/{id}/jugadores:
+    parameters:
+      - $ref: '#/components/parameters/IdRoster'
+
+    get:
+      tags: [Asignaciones]
+      summary: Listar los jugadores de un roster
+      responses:
+        '200':
+          description: Jugadores del roster con su rol dentro de él (puede estar vacía)
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/JugadorEnRoster'
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '404':
+          $ref: '#/components/responses/NoEncontrado'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+
+    post:
+      tags: [Asignaciones]
+      summary: Asignar un jugador a un roster
+      description: |
+        Agrega un jugador al roster como Titular o Suplente.
+
+        Reglas que se validan cuando el rol es **Titular**:
+        - No puede haber dos titulares con el mismo rol de juego (RN-03).
+        - Un roster tiene como máximo 5 titulares (RN-02).
+
+        Como Suplente no hay restricción de rol. Un jugador no puede estar dos veces en el mismo roster.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AsignacionNueva'
+      responses:
+        '201':
+          description: Jugador asignado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JugadorEnRoster'
+        '400':
+          description: Falta id_jugador, el id no es un entero, o rol_en_roster no es Titular/Suplente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: El roster o el jugador no existen
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: El jugador ya está en el roster, ya hay un titular con ese rol, o el roster ya tiene 5 titulares
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+
+  /health:
+    get:
+      tags: [Auxiliares]
+      summary: Verificar que el API está activa
+      description: Comprueba que el API responde y que la base de datos es accesible.
+      responses:
+        '200':
+          description: API y base de datos funcionando
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  status:
+                    type: string
+                    example: ok
+                  database:
+                    type: string
+                    example: connected
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+    
+  /roles:
+    get: 
+      tags: [Auxiliares]
+      summary: Ver los roles
+      description: Permite ver los roles posibles de un jugador en un equipo
+      responses:
+        '200': 
+          description: Devolvio correctamente los roles
+          content:
+            application/json: 
+              schema:
+                type: array
+                example: ['Top', 'Jungle', 'Mid', 'ADC', 'Support']
+        '500':
+          description: Algo salio mal
+      
+  /estados:
+    get: 
+      tags: [Auxiliares]
+      summary: Ver los estados
+      description: Permite ver los estados posibles de un jugador en un equipo
+      responses:
+        '200': 
+          description: Devolvio correctamente los estados
+          content:
+            application/json: 
+              schema:
+                type: array
+                example: ['activo', 'inactivo']
+        '500':
+          description: Algo salio mal
+
+  /tipos-roster:
+    get: 
+      tags: [Auxiliares]
+      summary: Ver los tipos de un roster
+      description: Permite ver los tipos de roster que hay
+      responses:
+        '200': 
+          description: Devolvio correctamente la lista de tipaos
+          content:
+            application/json: 
+              schema:
+                type: array
+                example: ['Principal', 'Academy']
+        '500':
+          description: Algo salio mal
+
+    
+
