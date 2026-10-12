@@ -37,8 +37,8 @@ API REST para gestionar jugadores de eSports y armar rosters (equipos). Permite 
 ## Instalación
 
 ```bash
-git clone <URL-DEL-REPOSITORIO>
-cd <NOMBRE-DE-LA-CARPETA>
+git clone https://github.com/MissingNam/eSports-API-Homework
+cd REST_API_PROYECT
 npm install
 ```
 
