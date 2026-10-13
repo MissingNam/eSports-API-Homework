@@ -12,9 +12,9 @@ servers:
 tags:
   - name: Jugadores
     description: Gestión de jugadores
-  - name: Rosters                       # NUEVO
+  - name: Rosters                       
     description: Gestión de rosters
-  - name: Asignaciones                  # NUEVO
+  - name: Asignaciones                  
     description: Jugadores dentro de un roster (Titular o Suplente)
   - name: Auxiliares
     description: Endpoints de apoyo y verificación
@@ -140,7 +140,7 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorInterno'
 
-  # ----------------------------- ROSTERS (NUEVO) -----------------------------
+  # ----------------------------- ROSTERS  -----------------------------
   /rosters:
     get:
       tags: [Rosters]
@@ -252,7 +252,7 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorInterno'
 
-  # ------------------------- ASIGNACIONES (NUEVO) -------------------------
+  # ------------------------- ASIGNACIONES  -------------------------
   /rosters/{id}/jugadores:
     parameters:
       - $ref: '#/components/parameters/IdRoster'
@@ -321,6 +321,122 @@ paths:
         '500':
           $ref: '#/components/responses/ErrorInterno'
 
+  /rosters/{id}/jugadores/{id_jugador}:
+    parameters:
+      - $ref: '#/components/parameters/IdRoster'
+      - $ref: '#/components/parameters/IdJugadorEnRuta'
+
+    put:
+      tags: [Asignaciones]
+      summary: Cambiar el rol de un jugador dentro del roster
+      description: Cambia entre Titular y Suplente. Al pasar a Titular se validan las mismas reglas que al asignar (RN-02 y RN-03).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AsignacionCambio'
+      responses:
+        '200':
+          description: Rol actualizado
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/JugadorEnRoster'
+        '400':
+          description: Ids inválidos o rol_en_roster no es Titular/Suplente
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: El roster o el jugador no existen, o el jugador no está asignado a ese roster
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Ya hay un titular con ese rol, o el roster ya tiene 5 titulares
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+
+    delete:
+      tags: [Asignaciones]
+      summary: Quitar un jugador de un roster
+      description: Solo elimina la asignación. El jugador y el roster siguen existiendo.
+      responses:
+        '204':
+          description: Jugador removido del roster (sin contenido)
+        '400':
+          $ref: '#/components/responses/SolicitudInvalida'
+        '404':
+          description: El roster o el jugador no existen, o el jugador no está asignado a ese roster
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+
+  # ------------------------- AUXILIARES -------------------------
+  /roles:                              
+    get:
+      tags: [Auxiliares]
+      summary: Listar los roles de jugador válidos
+      description: Devuelve una lista con los posibles roles validos de un jugador
+      responses:
+        '200':
+          description: Roles válidos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/RolJugador'
+                example: [Top, Jungle, Mid, ADC, Support]
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+
+  /estados:                             
+    get:
+      tags: [Auxiliares]
+      summary: Listar los estados de jugador válidos
+      description: Devuele una lista con los posibles estados validos de un jugador
+      responses:
+        '200':
+          description: Estados válidos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/EstadoJugador'
+                example: [activo, inactivo]
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+
+  /tipos-roster:                        # NUEVO
+    get:
+      tags: [Auxiliares]
+      summary: Listar los tipos de roster válidos
+      description: Devuelve una lista con los tipos que un roster puede poseer
+      responses:
+        '200':
+          description: Tipos válidos
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/TipoRoster'
+                example: [Principal, Academy]
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+
   /health:
     get:
       tags: [Auxiliares]
@@ -342,54 +458,276 @@ paths:
                     example: connected
         '500':
           $ref: '#/components/responses/ErrorInterno'
-    
-  /roles:
-    get: 
-      tags: [Auxiliares]
-      summary: Ver los roles
-      description: Permite ver los roles posibles de un jugador en un equipo
-      responses:
-        '200': 
-          description: Devolvio correctamente los roles
-          content:
-            application/json: 
-              schema:
-                type: array
-                example: ['Top', 'Jungle', 'Mid', 'ADC', 'Support']
-        '500':
-          description: Algo salio mal
-      
-  /estados:
-    get: 
-      tags: [Auxiliares]
-      summary: Ver los estados
-      description: Permite ver los estados posibles de un jugador en un equipo
-      responses:
-        '200': 
-          description: Devolvio correctamente los estados
-          content:
-            application/json: 
-              schema:
-                type: array
-                example: ['activo', 'inactivo']
-        '500':
-          description: Algo salio mal
 
-  /tipos-roster:
-    get: 
-      tags: [Auxiliares]
-      summary: Ver los tipos de un roster
-      description: Permite ver los tipos de roster que hay
-      responses:
-        '200': 
-          description: Devolvio correctamente la lista de tipaos
-          content:
-            application/json: 
-              schema:
-                type: array
-                example: ['Principal', 'Academy']
-        '500':
-          description: Algo salio mal
+components:
+  parameters:
+    IdJugador:
+      name: id
+      in: path
+      required: true
+      description: Identificador del jugador
+      schema:
+        type: integer
+        minimum: 1
+        example: 5
 
-    
+    IdRoster:                          
+      name: id
+      in: path
+      required: true
+      description: Identificador del roster
+      schema:
+        type: integer
+        minimum: 1
+        example: 1
 
+    IdJugadorEnRuta:                   
+      name: id_jugador
+      in: path
+      required: true
+      description: Identificador del jugador asignado al roster
+      schema:
+        type: integer
+        minimum: 1
+        example: 5
+
+  schemas:
+    RolJugador:
+      type: string
+      enum: [Top, Jungle, Mid, ADC, Support]
+      example: Mid
+
+    EstadoJugador:
+      type: string
+      enum: [activo, inactivo]
+      example: activo
+
+    Jugador:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 5
+        nickname:
+          type: string
+          example: Faker
+        nombre_real:
+          type: string
+          nullable: true
+          example: Lee Sang-hyeok
+        pais:
+          type: string
+          nullable: true
+          example: Corea del Sur
+        rol:
+          $ref: '#/components/schemas/RolJugador'
+        estado:
+          $ref: '#/components/schemas/EstadoJugador'
+
+    JugadorNuevo:
+      type: object
+      required: [nickname, rol]
+      properties:
+        nickname:
+          type: string
+          maxLength: 50
+          description: Debe ser único en todo el sistema
+          example: Faker
+        nombre_real:
+          type: string
+          maxLength: 100
+          example: Lee Sang-hyeok
+        pais:
+          type: string
+          maxLength: 60
+          example: Corea del Sur
+        rol:
+          $ref: '#/components/schemas/RolJugador'
+        estado:
+          allOf:
+            - $ref: '#/components/schemas/EstadoJugador'
+          description: Si se omite, se guarda como activo
+
+    JugadorActualizacion:
+      type: object
+      properties:
+        nickname:
+          type: string
+          maxLength: 50
+          example: Faker
+        nombre_real:
+          type: string
+          maxLength: 100
+          example: Lee Sang-hyeok
+        pais:
+          type: string
+          maxLength: 60
+          example: Corea del Sur
+        rol:
+          $ref: '#/components/schemas/RolJugador'
+        estado:
+          $ref: '#/components/schemas/EstadoJugador'
+
+    # ---- NUEVO: rosters ----
+    TipoRoster:
+      type: string
+      enum: [Principal, Academy]
+      example: Principal
+
+    RolEnRoster:
+      type: string
+      enum: [Titular, Suplente]
+      example: Titular
+
+    Roster:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        nombre:
+          type: string
+          example: TL Principal
+        juego:
+          type: string
+          example: League of Legends
+        tipo:
+          $ref: '#/components/schemas/TipoRoster'
+        temporada:
+          type: string
+          example: '2026'
+
+    RosterResumen:
+      description: Roster con la cantidad de jugadores asignados (se usa en el listado)
+      allOf:
+        - $ref: '#/components/schemas/Roster'
+        - type: object
+          properties:
+            cantidad_jugadores:
+              type: integer
+              example: 6
+
+    RosterDetalle:
+      description: Roster con la lista de sus jugadores
+      allOf:
+        - $ref: '#/components/schemas/Roster'
+        - type: object
+          properties:
+            jugadores:
+              type: array
+              items:
+                $ref: '#/components/schemas/JugadorEnRoster'
+
+    RosterNuevo:
+      type: object
+      required: [nombre, tipo, temporada]
+      properties:
+        nombre:
+          type: string
+          maxLength: 100
+          example: TL Principal
+        juego:
+          type: string
+          maxLength: 100
+          default: League of Legends
+          description: Si se omite, se guarda League of Legends
+          example: League of Legends
+        tipo:
+          $ref: '#/components/schemas/TipoRoster'
+        temporada:
+          type: string
+          maxLength: 10
+          example: '2026'
+
+    RosterActualizacion:
+      type: object
+      properties:
+        nombre:
+          type: string
+          maxLength: 100
+          example: TL Principal
+        juego:
+          type: string
+          maxLength: 100
+          example: League of Legends
+        tipo:
+          $ref: '#/components/schemas/TipoRoster'
+        temporada:
+          type: string
+          maxLength: 10
+          example: '2027'
+
+    # -----------------  asignaciones ------------------
+    JugadorEnRoster:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 5
+        nickname:
+          type: string
+          example: Faker
+        rol:
+          allOf:
+            - $ref: '#/components/schemas/RolJugador'
+          description: Rol de juego del jugador (Top, Jungle, ...)
+        rol_en_roster:
+          allOf:
+            - $ref: '#/components/schemas/RolEnRoster'
+          description: Si el jugador es titular o suplente en este roster
+
+    AsignacionNueva:
+      type: object
+      required: [id_jugador, rol_en_roster]
+      properties:
+        id_jugador:
+          type: integer
+          minimum: 1
+          example: 5
+        rol_en_roster:
+          $ref: '#/components/schemas/RolEnRoster'
+
+    AsignacionCambio:
+      type: object
+      required: [rol_en_roster]
+      properties:
+        rol_en_roster:
+          $ref: '#/components/schemas/RolEnRoster'
+
+    Error:
+      type: object
+      properties:
+        error:
+          type: string
+          example: Jugador no encontrado
+        detalles:
+          type: array
+          description: Mensajes específicos de validación (solo en algunos errores 400)
+          items:
+            type: string
+
+  responses:
+    SolicitudInvalida:
+      description: Datos inválidos (campo obligatorio vacío, valor no permitido, id no numérico, JSON mal formado)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    NoEncontrado:
+      description: El recurso no existe
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    Conflicto:
+      description: Conflicto con los datos existentes (por ejemplo, nickname duplicado)
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    ErrorInterno:
+      description: Error interno del servidor
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'

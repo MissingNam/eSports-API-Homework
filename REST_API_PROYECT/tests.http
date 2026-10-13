@@ -1,0 +1,147 @@
+### Verificar que el API y la base de datos estan activas
+GET /api/v1/health HTTP/1.1
+host: localhost:3000
+
+
+### Listar roles validos
+GET /api/v1/roles HTTP/1.1
+host: localhost:3000
+
+
+### Listar estados validos
+GET /api/v1/estados HTTP/1.1
+host: localhost:3000
+
+
+### Listar tipos de roster validos
+GET /api/v1/tipos-roster HTTP/1.1
+host: localhost:3000
+
+
+### Listar todos los jugadores
+GET /api/v1/jugadores HTTP/1.1
+host: localhost:3000
+
+
+### Listar jugadores con filtros 
+GET /api/v1/jugadores?rol=Mid&estado=activo&search=fak HTTP/1.1
+host: localhost:3000
+
+
+### Crear un jugador 
+# @name crearJugador
+POST /api/v1/jugadores HTTP/1.1
+host: localhost:3000
+Content-Type: application/json
+
+{
+  "nickname": "Caps",
+  "nombre_real": "Rasmus Winther",
+  "pais": "Dinamarca",
+  "rol": "Mid",
+  "estado": "activo"
+}
+
+
+### Ver el detalle del jugador recien creado
+GET /api/v1/jugadores?search=Caps HTTP/1.1
+host: localhost:3000
+
+###
+
+### Actualizar el jugador recien creado
+PUT /api/v1/jugadores/{{crearJugador.response.body.id}} HTTP/1.1
+host: localhost:3000
+Content-Type: application/json
+
+{
+  "pais": "Noruega",
+  "estado": "activo"
+}
+
+
+### Listar todos los rosters (con cantidad de jugadores)
+GET /api/v1/rosters HTTP/1.1
+host: localhost:3000
+
+
+### Listar rosters con filtros
+GET /api/v1/rosters?tipo=Principal&temporada=2026 HTTP/1.1
+host: localhost:3000
+
+
+### Crear un roster
+# @name crearRoster
+POST /api/v1/rosters HTTP/1.1
+host: localhost:3000
+Content-Type: application/json
+
+{
+  "nombre": "Roster de prueba",
+  "juego": "League of Legends",
+  "tipo": "Principal",
+  "temporada": "2026"
+}
+
+
+
+### Ver el detalle del roster recien creado 
+GET /api/v1/rosters/{{crearRoster.response.body.id}} HTTP/1.1
+host: localhost:3000
+
+
+### Actualizar el roster recien creado
+PUT /api/v1/rosters/{{crearRoster.response.body.id}} HTTP/1.1
+host: localhost:3000
+Content-Type: application/json
+
+{
+  "nombre": "Roster no tan prueba",
+  "tipo": "Academy",
+  "temporada": "2027"
+}
+
+### Asignar a un jugador al roster creado, como titular
+POST /api/v1/rosters/{{crearRoster.response.body.id}}/jugadores HTTP/1.1
+host: localhost:3000
+Content-Type: application/json
+
+{
+  "id_jugador": 13,
+  "rol_en_roster": "Titular"
+}
+
+
+### Listar los jugadores del roster
+GET /api/v1/rosters/{{crearRoster.response.body.id}}/jugadores HTTP/1.1
+host: localhost:3000
+
+
+### Cambiar al jugador de Titular a Suplente
+PUT /api/v1/rosters/{{crearRoster.response.body.id}}/jugadores/13 HTTP/1.1
+host: localhost:3000
+Content-Type: application/json
+
+{
+  "rol_en_roster": "Suplente"
+}
+
+
+### Quitar al jugador del roster 
+DELETE /api/v1/rosters/{{crearRoster.response.body.id}}/jugadores/13 HTTP/1.1
+host: localhost:3000
+
+
+
+# ===========================================================================
+
+
+### Eliminar el roster de prueba
+DELETE /api/v1/rosters/{{crearRoster.response.body.id}} HTTP/1.1
+host: localhost:3000
+
+
+### Eliminar el jugador de prueba
+DELETE /api/v1/jugadores/{{crearJugador.response.body.id}} HTTP/1.1
+host: localhost:3000
+

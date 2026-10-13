@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@chaeco/auto-api-docs": "^0.0.3"
+  }
+}

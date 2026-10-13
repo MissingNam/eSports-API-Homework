@@ -19,10 +19,6 @@ module.exports = (sequelize, DataTypes) =>{
       allowNull: false,
       defaultValue: 'League of Legends'
     },
-    tipo: {
-      type: DataTypes.ENUM('Principal', 'Academy'),
-      allowNull: false
-    }, 
     temporada: {
       type: DataTypes.STRING(10),
       allowNull: false
