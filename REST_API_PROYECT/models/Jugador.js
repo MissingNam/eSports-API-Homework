@@ -27,7 +27,7 @@ module.exports = (sequelize, DataTypes) => {
         }
       }
     },
-    estado: {
+    estado: { // NO HABIA NECESIDAD DE HUMILLARME TANTO POR ESCRIBIR "INCATIVO" EN LUGAR DE "INACTIVO" :'(
       type: DataTypes.ENUM('activo', 'inactivo'),
       allowNull: false,
       defaultValue: 'activo'

@@ -66,7 +66,7 @@ host: localhost:3000
 
 
 ### Listar rosters con filtros
-GET /api/v1/rosters?tipo=Principal&temporada=2026 HTTP/1.1
+GET /api/v1/rosters?tipo=Principal&temporada=2027 HTTP/1.1
 host: localhost:3000
 
 

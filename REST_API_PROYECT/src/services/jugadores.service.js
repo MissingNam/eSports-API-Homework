@@ -1,6 +1,6 @@
 const { Op } = require('sequelize');
-const { Jugador } = require('../../models');
 const { HttpError } = require('../utils/errors');
+const { Jugador, Roster, RosterJugador } = require('../../models');
 
 const CAMPOS = ['nickname', 'nombre_real', 'pais', 'rol', 'estado'];
 
@@ -36,9 +36,53 @@ async function crear(body) {
   return Jugador.create(filtrarCampos(body));
 }
 
+// AQUI ESTA SU VALIDACION DE CAMBIO DE ROL
+async function validarCambioDeRol(jugador, nuevoRol) {
+  const comoTitular = await RosterJugador.findAll({
+    where: { id_jugador: jugador.id, rol_en_roster: 'Titular' },
+    attributes: ['id_roster']
+  });
+  if (comoTitular.length === 0) return;
+
+  const otrosTitulares = await RosterJugador.findAll({
+    where: {
+      id_roster: comoTitular.map((f) => f.id_roster),
+      rol_en_roster: 'Titular',
+      id_jugador: { [Op.ne]: jugador.id }
+    },
+    attributes: ['id_roster', 'id_jugador']
+  });
+  if (otrosTitulares.length === 0) return;
+
+
+  const coincidentes = await Jugador.findAll({
+    where: { id: otrosTitulares.map((o) => o.id_jugador), rol: nuevoRol },
+    attributes: ['id', 'nickname']
+  });
+  if (coincidentes.length === 0) return;
+
+  const choque = otrosTitulares.find((o) =>
+    coincidentes.some((c) => c.id === o.id_jugador)
+  );
+  const roster = await Roster.findByPk(choque.id_roster);
+  const otro = coincidentes.find((c) => c.id === choque.id_jugador);
+
+  throw new HttpError(
+    409,
+    `No se puede cambiar el rol a ${nuevoRol}: ${jugador.nickname} es titular en ` +
+    `el roster "${roster.nombre}", donde ${otro.nickname} ya es titular ${nuevoRol}`
+  );
+}
+
 async function actualizar(id, body) {
   const jugador = await obtener(id);
-  return jugador.update(filtrarCampos(body));
+  const datos = filtrarCampos(body);
+
+  if (datos.rol !== undefined && datos.rol !== jugador.rol) {
+    await validarCambioDeRol(jugador, datos.rol);
+  }
+
+  return jugador.update(datos);
 }
 
 async function eliminar(id) {

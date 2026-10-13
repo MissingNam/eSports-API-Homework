@@ -122,9 +122,14 @@ paths:
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
-          $ref: '#/components/responses/Conflicto'
+          description: Nickname duplicado, o el nuevo rol choca con otro titular en un roster donde el jugador es titular
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
         '500':
           $ref: '#/components/responses/ErrorInterno'
+        
 
     delete:
       tags: [Jugadores]
