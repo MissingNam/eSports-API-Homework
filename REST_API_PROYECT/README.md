@@ -103,7 +103,7 @@ Jugador                      Roster                      Roster_Jugador
 ## Ejecución
 
 ```bash
-node src/app.js
+pnpm run start
 ```
 
 La API quedará disponible en `http://localhost:3000/api/v1`. Para verificar que funciona:

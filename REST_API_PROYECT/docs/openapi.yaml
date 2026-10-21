@@ -10,6 +10,8 @@ servers:
     description: Servidor actual
 
 tags:
+  - name: Autenticación
+    description: Inicio y cierre de sesión de administradores (JWT en cookie HttpOnly + token CSRF)
   - name: Jugadores
     description: Gestión de jugadores
   - name: Rosters                       
@@ -20,6 +22,81 @@ tags:
     description: Endpoints de apoyo y verificación
 
 paths:
+  # ------------------------- AUTENTICACION -------------------------
+  /auth/login:
+    post:
+      tags: [Autenticación]
+      summary: Iniciar sesión como administrador
+      description: |
+        Valida usuario y contraseña. Si son correctos:
+        - Guarda el JWT en la cookie **access_token** (HttpOnly, SameSite=Strict). El navegador la reenvía solo.
+        - Devuelve en el body un **csrfToken** que el frontend debe enviar en el header `X-CSRF-Token` en cada POST, PUT y DELETE.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Credenciales'
+      responses:
+        '200':
+          description: Sesión iniciada
+          headers:
+            Set-Cookie:
+              description: Cookie access_token con el JWT (HttpOnly, SameSite=Strict)
+              schema:
+                type: string
+                example: access_token=eyJhbGciOi...; Path=/; HttpOnly; SameSite=Strict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SesionAdmin'
+        '400':
+          description: Falta el usuario o la contraseña
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Credenciales inválidas (el mensaje es el mismo si el usuario no existe o la contraseña falla)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+
+  /auth/logout:
+    post:
+      tags: [Autenticación]
+      summary: Cerrar sesión
+      description: Borra la cookie access_token. No requiere estar autenticado.
+      responses:
+        '204':
+          description: Sesión cerrada (sin contenido)
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+
+  /auth/me:
+    get:
+      tags: [Autenticación]
+      summary: Ver la sesión actual
+      description: |
+        Confirma que la cookie es válida y que el administrador sigue existiendo.
+        El frontend lo llama al cargar la app, porque guarda el csrfToken solo en memoria y lo pierde al recargar la página.
+      security:
+        - cookieAuth: []
+      responses:
+        '200':
+          description: Sesión válida
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SesionAdmin'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+
   # ---------------------------- JUGADORES ----------------------------
   /jugadores:
     get:
@@ -57,6 +134,9 @@ paths:
 
     post:
       tags: [Jugadores]
+      security:
+        - cookieAuth: []
+          csrfToken: []
       summary: Crear un jugador
       description: Registra un jugador nuevo. El nickname debe ser único.
       requestBody:
@@ -74,6 +154,10 @@ paths:
                 $ref: '#/components/schemas/Jugador'
         '400':
           $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/CsrfInvalido'
         '409':
           $ref: '#/components/responses/Conflicto'
         '500':
@@ -102,6 +186,9 @@ paths:
 
     put:
       tags: [Jugadores]
+      security:
+        - cookieAuth: []
+          csrfToken: []
       summary: Actualizar un jugador
       description: Modifica uno o varios campos. Los campos que no se envíen no cambian.
       requestBody:
@@ -119,6 +206,10 @@ paths:
                 $ref: '#/components/schemas/Jugador'
         '400':
           $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/CsrfInvalido'
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '409':
@@ -133,6 +224,9 @@ paths:
 
     delete:
       tags: [Jugadores]
+      security:
+        - cookieAuth: []
+          csrfToken: []
       summary: Eliminar un jugador
       description: Elimina al jugador y también sus asignaciones a rosters. Los rosters no se eliminan.
       responses:
@@ -140,6 +234,10 @@ paths:
           description: Jugador eliminado (sin contenido)
         '400':
           $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/CsrfInvalido'
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '500':
@@ -177,6 +275,9 @@ paths:
 
     post:
       tags: [Rosters]
+      security:
+        - cookieAuth: []
+          csrfToken: []
       summary: Crear un roster
       description: Crea un roster vacío. Si no se envía el juego, se guarda League of Legends.
       requestBody:
@@ -194,6 +295,10 @@ paths:
                 $ref: '#/components/schemas/Roster'
         '400':
           $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/CsrfInvalido'
         '500':
           $ref: '#/components/responses/ErrorInterno'
 
@@ -221,6 +326,9 @@ paths:
 
     put:
       tags: [Rosters]
+      security:
+        - cookieAuth: []
+          csrfToken: []
       summary: Actualizar un roster
       description: Modifica uno o varios campos. Los campos que no se envíen no cambian.
       requestBody:
@@ -238,6 +346,10 @@ paths:
                 $ref: '#/components/schemas/Roster'
         '400':
           $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/CsrfInvalido'
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '500':
@@ -245,6 +357,9 @@ paths:
 
     delete:
       tags: [Rosters]
+      security:
+        - cookieAuth: []
+          csrfToken: []
       summary: Eliminar un roster
       description: Elimina el roster y sus asignaciones. Los jugadores permanecen en el sistema.
       responses:
@@ -252,6 +367,10 @@ paths:
           description: Roster eliminado (sin contenido)
         '400':
           $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/CsrfInvalido'
         '404':
           $ref: '#/components/responses/NoEncontrado'
         '500':
@@ -283,6 +402,9 @@ paths:
 
     post:
       tags: [Asignaciones]
+      security:
+        - cookieAuth: []
+          csrfToken: []
       summary: Asignar un jugador a un roster
       description: |
         Agrega un jugador al roster como Titular o Suplente.
@@ -311,6 +433,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/CsrfInvalido'
         '404':
           description: El roster o el jugador no existen
           content:
@@ -333,6 +459,9 @@ paths:
 
     put:
       tags: [Asignaciones]
+      security:
+        - cookieAuth: []
+          csrfToken: []
       summary: Cambiar el rol de un jugador dentro del roster
       description: Cambia entre Titular y Suplente. Al pasar a Titular se validan las mismas reglas que al asignar (RN-02 y RN-03).
       requestBody:
@@ -354,6 +483,10 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/Error'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/CsrfInvalido'
         '404':
           description: El roster o el jugador no existen, o el jugador no está asignado a ese roster
           content:
@@ -371,6 +504,9 @@ paths:
 
     delete:
       tags: [Asignaciones]
+      security:
+        - cookieAuth: []
+          csrfToken: []
       summary: Quitar un jugador de un roster
       description: Solo elimina la asignación. El jugador y el roster siguen existiendo.
       responses:
@@ -378,6 +514,10 @@ paths:
           description: Jugador removido del roster (sin contenido)
         '400':
           $ref: '#/components/responses/SolicitudInvalida'
+        '401':
+          $ref: '#/components/responses/NoAutenticado'
+        '403':
+          $ref: '#/components/responses/CsrfInvalido'
         '404':
           description: El roster o el jugador no existen, o el jugador no está asignado a ese roster
           content:
@@ -465,6 +605,20 @@ paths:
           $ref: '#/components/responses/ErrorInterno'
 
 components:
+  securitySchemes:
+    cookieAuth:
+      type: apiKey
+      in: cookie
+      name: access_token
+      description: |
+        JWT de administrador en cookie HttpOnly. Se obtiene con `POST /auth/login` y el navegador la envía solo.
+        Swagger UI no permite escribirla a mano: haz el login con "Try it out" y el navegador la guarda.
+    csrfToken:
+      type: apiKey
+      in: header
+      name: X-CSRF-Token
+      description: Valor `csrfToken` devuelto por `/auth/login` o `/auth/me`. Obligatorio en POST, PUT y DELETE junto con la cookie.
+
   parameters:
     IdJugador:
       name: id
@@ -699,6 +853,39 @@ components:
         rol_en_roster:
           $ref: '#/components/schemas/RolEnRoster'
 
+    # ---- autenticacion ----
+    Credenciales:
+      type: object
+      required: [username, password]
+      properties:
+        username:
+          type: string
+          example: admin
+        password:
+          type: string
+          format: password
+          example: MiClave123
+
+    Admin:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        username:
+          type: string
+          example: admin
+
+    SesionAdmin:
+      type: object
+      properties:
+        admin:
+          $ref: '#/components/schemas/Admin'
+        csrfToken:
+          type: string
+          description: Enviarlo en el header X-CSRF-Token en cada POST, PUT y DELETE
+          example: 9f2c4e1ab0d37c58e6a1b2c3d4e5f60718293a4b5c6d7e8f90a1b2c3d4e5f607
+
     Error:
       type: object
       properties:
@@ -712,6 +899,18 @@ components:
             type: string
 
   responses:
+    NoAutenticado:
+      description: No hay sesión, o la cookie es inválida o expiró
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
+    CsrfInvalido:
+      description: Falta el header X-CSRF-Token o no coincide con el de la sesión
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/Error'
     SolicitudInvalida:
       description: Datos inválidos (campo obligatorio vacío, valor no permitido, id no numérico, JSON mal formado)
       content:

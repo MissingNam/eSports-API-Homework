@@ -8,10 +8,23 @@ const fs = require('fs');
 const path = require('path');
 const YAML = require('yaml');
 const swaggerUi = require('swagger-ui-express');
+const autenticacionRoutes = require('./routes/autenticacion.routes');
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
+
 
 const app = express();
 
-app.use(express.json());                        // permite leer el body JSON
+app.use(express.json());   
+
+// permite leer el body JSON
+app.use(cors({
+  origin: process.env.FRONTEND_ORIGIN,
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'X-CSRF-Token']
+}));
+app.use(express.json());
+app.use(cookieParser());
 
 // Documentación OpenAPI
 const openapiSpec = YAML.parse(
@@ -23,8 +36,13 @@ app.use('/api/v1/jugadores', jugadoresRoutes);
 app.use('/api/v1/rosters', rostersRoutes);
 app.use('/api/v1', auxiliaresRoutes);
 
+
+
+app.use('/api/v1/auth', autenticacionRoutes);
+
 // Ruta inexistente
 app.use((req, res) => res.status(404).json({ error: 'Ruta no encontrada' }));
+
 
 app.use(errorHandler);                          // siempre al final
 

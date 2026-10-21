@@ -1,3 +1,23 @@
+@adminUser = admin
+@adminPass = 12345678
+
+### Login de administrador (ejecutar primero: guarda la cookie y el csrfToken)
+# @name login
+POST /api/v1/auth/login HTTP/1.1
+host: localhost:3000
+Content-Type: application/json
+
+{
+  "username": "{{adminUser}}",
+  "password": "{{adminPass}}"
+}
+
+
+### Ver la sesion actual
+GET /api/v1/auth/me HTTP/1.1
+host: localhost:3000
+
+
 ### Verificar que el API y la base de datos estan activas
 GET /api/v1/health HTTP/1.1
 host: localhost:3000
@@ -24,7 +44,7 @@ host: localhost:3000
 
 
 ### Listar jugadores con filtros 
-GET /api/v1/jugadores?rol=Mid&estado=activo&search=fak HTTP/1.1
+GET /api/v1/jugadores?search=fak HTTP/1.1
 host: localhost:3000
 
 
@@ -33,6 +53,7 @@ host: localhost:3000
 POST /api/v1/jugadores HTTP/1.1
 host: localhost:3000
 Content-Type: application/json
+X-CSRF-Token: {{login.response.body.csrfToken}}
 
 {
   "nickname": "Caps",
@@ -53,6 +74,7 @@ host: localhost:3000
 PUT /api/v1/jugadores/{{crearJugador.response.body.id}} HTTP/1.1
 host: localhost:3000
 Content-Type: application/json
+X-CSRF-Token: {{login.response.body.csrfToken}}
 
 {
   "pais": "Noruega",
@@ -75,6 +97,7 @@ host: localhost:3000
 POST /api/v1/rosters HTTP/1.1
 host: localhost:3000
 Content-Type: application/json
+X-CSRF-Token: {{login.response.body.csrfToken}}
 
 {
   "nombre": "Roster de prueba",
@@ -94,6 +117,7 @@ host: localhost:3000
 PUT /api/v1/rosters/{{crearRoster.response.body.id}} HTTP/1.1
 host: localhost:3000
 Content-Type: application/json
+X-CSRF-Token: {{login.response.body.csrfToken}}
 
 {
   "nombre": "Roster no tan prueba",
@@ -105,6 +129,7 @@ Content-Type: application/json
 POST /api/v1/rosters/{{crearRoster.response.body.id}}/jugadores HTTP/1.1
 host: localhost:3000
 Content-Type: application/json
+X-CSRF-Token: {{login.response.body.csrfToken}}
 
 {
   "id_jugador": 13,
@@ -121,6 +146,7 @@ host: localhost:3000
 PUT /api/v1/rosters/{{crearRoster.response.body.id}}/jugadores/13 HTTP/1.1
 host: localhost:3000
 Content-Type: application/json
+X-CSRF-Token: {{login.response.body.csrfToken}}
 
 {
   "rol_en_roster": "Suplente"
@@ -130,6 +156,7 @@ Content-Type: application/json
 ### Quitar al jugador del roster 
 DELETE /api/v1/rosters/{{crearRoster.response.body.id}}/jugadores/13 HTTP/1.1
 host: localhost:3000
+X-CSRF-Token: {{login.response.body.csrfToken}}
 
 
 
@@ -139,9 +166,45 @@ host: localhost:3000
 ### Eliminar el roster de prueba
 DELETE /api/v1/rosters/{{crearRoster.response.body.id}} HTTP/1.1
 host: localhost:3000
+X-CSRF-Token: {{login.response.body.csrfToken}}
 
 
 ### Eliminar el jugador de prueba
 DELETE /api/v1/jugadores/{{crearJugador.response.body.id}} HTTP/1.1
 host: localhost:3000
+X-CSRF-Token: {{login.response.body.csrfToken}}
 
+# ===========================================================================
+# Correciones con el Admin
+# ==========================================================================
+
+### [Debe dar 403] Escritura con sesion pero SIN token CSRF
+POST /api/v1/jugadores HTTP/1.1
+host: localhost:3000
+Content-Type: application/json
+
+{
+  "nickname": "SinCsrf",
+  "rol": "Top"
+}
+
+
+### Cerrar sesion
+POST /api/v1/auth/logout HTTP/1.1
+host: localhost:3000
+
+
+### [Debe dar 401] Escritura SIN sesion (ejecutar despues del logout)
+POST /api/v1/jugadores HTTP/1.1
+host: localhost:3000
+Content-Type: application/json
+
+{
+  "nickname": "SinSesion",
+  "rol": "Top"
+}
+
+
+### [Debe dar 401] Ver la sesion actual despues del logout
+GET /api/v1/auth/me HTTP/1.1
+host: localhost:3000
