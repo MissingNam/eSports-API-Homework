@@ -1,7 +1,11 @@
 // Uso: node scripts/crear-admin.js <usuario> <contraseña>
-require('dotenv').config();
-const bcrypt = require('bcryptjs');
-const { Admin, sequelize } = require('../../models');
+// require('dotenv').config();
+// const bcrypt = require('bcryptjs');
+// const { Admin, sequelize } = require('../../models');
+
+import 'dotenv/config';
+import bcrypt from 'bcryptjs';
+import { Admin, sequelize } from '../../models/index.js';
 
 async function main() {
   const [username, password] = process.argv.slice(2);

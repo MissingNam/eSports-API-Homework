@@ -1,7 +1,12 @@
-const { Router } = require('express');
-const ctrl = require('../controllers/rosters.controller');
-const asignaciones = require('../controllers/asignaciones.controller');
-const { protegerEscritura } = require('../middlewares/auth');
+// const { Router } = require('express');
+// const ctrl = require('../controllers/rosters.controller');
+// const asignaciones = require('../controllers/asignaciones.controller');
+// const { protegerEscritura } = require('../middlewares/auth.js');
+
+import { Router } from 'express';
+import * as ctrl from '../controllers/rosters.controller.js'
+import * as asignaciones from '../controllers/asignaciones.controller.js'
+import { protegerEscritura } from '../middlewares/auth.js';
 
 const router = Router();
 
@@ -15,4 +20,4 @@ router.post('/:id/jugadores', protegerEscritura, asignaciones.asignar);
 router.put('/:id/jugadores/:id_jugador', protegerEscritura, asignaciones.cambiarRol);
 router.delete('/:id/jugadores/:id_jugador', protegerEscritura, asignaciones.quitar);
 
-module.exports = router;
+export default router;

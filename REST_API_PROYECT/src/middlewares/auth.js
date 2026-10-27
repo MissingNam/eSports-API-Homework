@@ -1,7 +1,12 @@
-const crypto = require('crypto');
-const { HttpError } = require('../utils/errors');
-const { verificarAccess } = require('../utils/jwt');
-const { COOKIE_ACCESS } = require('../utils/cookies');
+// const crypto = require('crypto');
+// const { HttpError } = require('../utils/errors');
+// const { verificarAccess } = require('../utils/jwt');
+// const { COOKIE_ACCESS } = require('../utils/cookies');
+
+import crypto from 'crypto';
+import { HttpError } from '../utils/errors.js';
+import { verificarAccess } from '../utils/jwt.js';
+import { COOKIE_ACCESS } from '../utils/cookies.js';
 
 // Autenticación: ¿hay una cookie con un JWT válido?
 function requireAuth(req, res, next) {
@@ -34,4 +39,4 @@ function requireCsrf(req, res, next) {
 // Para POST, PUT y DELETE: autenticado + CSRF (el orden importa)
 const protegerEscritura = [requireAuth, requireCsrf];
 
-module.exports = { requireAuth, requireCsrf, protegerEscritura };
+export { requireAuth, requireCsrf, protegerEscritura };

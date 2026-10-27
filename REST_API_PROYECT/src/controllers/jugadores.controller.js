@@ -1,6 +1,8 @@
-const service = require('../services/jugadores.service');
-const asyncHandler = require('../utils/asyncHandler');
+// const service = require('../services/jugadores.service');
+// const asyncHandler = require('../utils/asyncHandler');
 
+import * as service from '../services/jugadores.service.js'
+import asyncHandler from '../utils/asyncHandler.js';
 
 const listar = asyncHandler(async (req, res) => {
   const jugadores = await service.listar(req.query);
@@ -27,4 +29,4 @@ const eliminar = asyncHandler(async (req, res) => {
   res.status(204).send();
 });
 
-module.exports = { listar, obtener, crear, actualizar, eliminar };
+export { listar, obtener, crear, actualizar, eliminar };

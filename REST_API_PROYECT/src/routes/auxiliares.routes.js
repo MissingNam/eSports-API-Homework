@@ -1,5 +1,8 @@
-const { Router } = require('express');
-const ctrl = require('../controllers/auxiliares.controller');
+// const { Router } = require('express');
+// const ctrl = require('../controllers/auxiliares.controller');
+
+import { Router } from 'express';
+import * as ctrl from '../controllers/auxiliares.controller.js'
 
 const router = Router();
 
@@ -8,4 +11,4 @@ router.get('/estados', ctrl.estados);
 router.get('/tipos-roster', ctrl.tiposRoster);
 router.get('/health', ctrl.health);
 
-module.exports = router;
+export default router;

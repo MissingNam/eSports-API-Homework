@@ -1,6 +1,10 @@
-const bcrypt = require('bcryptjs');
-const { HttpError } = require('../utils/errors');
-const { Admin } = require('../../models');
+// const bcrypt = require('bcryptjs');
+// const { HttpError } = require('../utils/errors');
+// const { Admin } = require('../../models/index.js');
+
+import bcrypt from 'bcryptjs';
+import { HttpError } from '../utils/errors.js';
+import { Admin } from '../../models/index.js';
 
 async function login(body = {}) {
   const { username, password } = body;
@@ -25,4 +29,4 @@ async function perfil(id) {
   return { id: admin.id, username: admin.username };
 }
 
-module.exports = { login, perfil };
+export { login, perfil };

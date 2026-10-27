@@ -1,5 +1,8 @@
-const service = require('../services/asignaciones.service');
-const asyncHandler = require('../utils/asyncHandler');
+// const service = require('../services/asignaciones.service');
+// const asyncHandler = require('../utils/asyncHandler');
+
+import * as service from '../services/asignaciones.service.js';
+import asyncHandler from '../utils/asyncHandler.js';
 
 const listar = asyncHandler(async (req, res) => {
   res.status(200).json(await service.listar(req.params.id));
@@ -20,4 +23,4 @@ const quitar = asyncHandler(async (req, res) => {
   res.status(204).send();
 });
 
-module.exports = { listar, asignar, cambiarRol, quitar };
+export { listar, asignar, cambiarRol, quitar };

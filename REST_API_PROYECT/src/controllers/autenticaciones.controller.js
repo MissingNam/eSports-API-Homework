@@ -1,8 +1,15 @@
-const crypto = require('crypto');
-const service = require('../services/autenticaciones.service');
-const asyncHandler = require('../utils/asyncHandler');
-const { firmarAccess } = require('../utils/jwt');
-const { setAccessCookie, clearAccessCookie } = require('../utils/cookies');
+// const crypto = require('crypto');
+// const service = require('../services/autenticaciones.service');
+// const asyncHandler = require('../utils/asyncHandler');
+// const { firmarAccess } = require('../utils/jwt');
+// const { setAccessCookie, clearAccessCookie } = require('../utils/cookies');
+
+import crypto from 'crypto';
+import * as service from '../services/autenticaciones.service.js';
+import asyncHandler from '../utils/asyncHandler.js';
+import { firmarAccess } from '../utils/jwt.js';
+import { setAccessCookie, clearAccessCookie } from '../utils/cookies.js';
+
 
 const login = asyncHandler(async (req, res) => {
   const admin = await service.login(req.body);
@@ -25,4 +32,4 @@ const me = asyncHandler(async (req, res) => {
   res.status(200).json({ admin, csrfToken: req.csrf });
 });
 
-module.exports = { login, logout, me };
+export { login, logout, me };

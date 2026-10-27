@@ -1,6 +1,10 @@
-const { Op } = require('sequelize');
-const { HttpError } = require('../utils/errors');
-const { Jugador, Roster, RosterJugador } = require('../../models');
+// const { Op } = require('sequelize');
+// const { HttpError } = require('../utils/errors');S
+// const { Jugador, Roster, RosterJugador } = require('../../models/index.js');
+
+import { Op } from 'sequelize';
+import { HttpError } from '../utils/errors.js';
+import { Jugador, Roster, RosterJugador } from '../../models/index.js';
 
 const CAMPOS = ['nickname', 'nombre_real', 'pais', 'rol', 'estado'];
 
@@ -90,4 +94,4 @@ async function eliminar(id) {
   await jugador.destroy();
 }
 
-module.exports = { listar, obtener, crear, actualizar, eliminar };
+export { listar, obtener, crear, actualizar, eliminar };

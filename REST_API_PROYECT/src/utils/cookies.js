@@ -1,6 +1,10 @@
-const { EXPIRA_SEG } = require('./jwt');
+// const { EXPIRA_SEG } = require('./jwt');
+// const COOKIE_ACCESS = 'access_token';
+
+import { EXPIRA_SEG } from './jwt.js';
 
 const COOKIE_ACCESS = 'access_token';
+
 
 function opciones() {
   return {
@@ -19,4 +23,4 @@ function clearAccessCookie(res) {
   res.clearCookie(COOKIE_ACCESS, opciones());   // debe usar las mismas opciones con las que se creó
 }
 
-module.exports = { COOKIE_ACCESS, setAccessCookie, clearAccessCookie };
+export { COOKIE_ACCESS, setAccessCookie, clearAccessCookie };

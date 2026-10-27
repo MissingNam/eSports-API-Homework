@@ -1,8 +1,14 @@
-const { Op } = require('sequelize');
-const { Jugador, RosterJugador } = require('../../models');
-const { HttpError } = require('../utils/errors');
-const rostersService = require('./rosters.service');
-const jugadoresService = require('./jugadores.service');
+// const { Op } = require('sequelize');
+// const { Jugador, RosterJugador } = require('../../models/index.js');
+// const { HttpError } = require('../utils/errors');
+// const rostersService = require('./rosters.service');
+// const jugadoresService = require('./jugadores.service');
+
+import { Op } from 'sequelize';
+import { Jugador, RosterJugador } from '../../models/index.js';
+import { HttpError } from '../utils/errors.js';
+import * as rostersService from './rosters.service.js'
+import * as jugadoresService from './jugadores.service.js'
 
 const ROLES_EN_ROSTER = ['Titular', 'Suplente'];
 const MAX_TITULARES = 5;
@@ -115,4 +121,4 @@ async function quitar(idRoster, idJugador) {
   await asignacion.destroy();
 }
 
-module.exports = { listar, asignar, cambiarRol, quitar };
+export { listar, asignar, cambiarRol, quitar };

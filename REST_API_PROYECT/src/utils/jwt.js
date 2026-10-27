@@ -1,4 +1,6 @@
-const jwt = require('jsonwebtoken');
+// const jwt = require('jsonwebtoken');
+
+import jwt from 'jsonwebtoken';
 
 function secreto() {
   const s = process.env.JWT_SECRET;
@@ -27,4 +29,4 @@ function verificarAccess(token) {
   return payload;
 }
 
-module.exports = { firmarAccess, verificarAccess, EXPIRA_SEG };
+export {firmarAccess, verificarAccess, EXPIRA_SEG };

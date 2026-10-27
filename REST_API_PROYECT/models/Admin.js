@@ -1,6 +1,4 @@
-'use strict';
-
-module.exports = (sequelize, DataTypes) => {
+const Admin = (sequelize, DataTypes) => {
   const Admin = sequelize.define('Admin', {
     id: {
       type: DataTypes.INTEGER,
@@ -26,3 +24,5 @@ module.exports = (sequelize, DataTypes) => {
 
   return Admin;
 };
+
+export default Admin;

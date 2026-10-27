@@ -1,6 +1,4 @@
-'use strict';
-
-module.exports = (sequelize, DataTypes) =>{
+const Roster = (sequelize, DataTypes) =>{
   const Roster = sequelize.define('Roster', {
     id: {
       type: DataTypes.INTEGER,
@@ -49,3 +47,5 @@ module.exports = (sequelize, DataTypes) =>{
 
   return Roster;
 };
+
+export default Roster;

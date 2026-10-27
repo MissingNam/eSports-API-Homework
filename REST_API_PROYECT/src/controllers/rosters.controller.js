@@ -1,5 +1,8 @@
-const service = require('../services/rosters.service');
-const asyncHandler = require('../utils/asyncHandler');
+// const service = require('../services/rosters.service');
+// const asyncHandler = require('../utils/asyncHandler');
+
+import * as service from '../services/rosters.service.js'
+import asyncHandler from '../utils/asyncHandler.js';
 
 const listar = asyncHandler(async (req, res) => {
   res.status(200).json(await service.listar(req.query));
@@ -22,4 +25,4 @@ const eliminar = asyncHandler(async (req, res) => {
   res.status(204).send();
 });
 
-module.exports = { listar, obtener, crear, actualizar, eliminar };
+export { listar, obtener, crear, actualizar, eliminar };

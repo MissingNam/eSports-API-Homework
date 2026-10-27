@@ -1,6 +1,4 @@
-'use strict';
-
-module.exports = (sequelize, DataTypes) => {
+const Jugador = (sequelize, DataTypes) => {
   const Jugador = sequelize.define('Jugador', {
     id: {
       type: DataTypes.INTEGER,
@@ -48,3 +46,5 @@ module.exports = (sequelize, DataTypes) => {
 
   return Jugador;
 };
+
+export default Jugador;
