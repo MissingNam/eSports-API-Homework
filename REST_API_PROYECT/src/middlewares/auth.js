@@ -1,26 +1,29 @@
-// const crypto = require('crypto');
-// const { HttpError } = require('../utils/errors');
-// const { verificarAccess } = require('../utils/jwt');
-// const { COOKIE_ACCESS } = require('../utils/cookies');
-
 import crypto from 'crypto';
 import { HttpError } from '../utils/errors.js';
 import { verificarAccess } from '../utils/jwt.js';
 import { COOKIE_ACCESS } from '../utils/cookies.js';
 
-// Autenticación: ¿hay una cookie con un JWT válido?
+// Autenticación: ¿hay una cookie con un JWT válido? (admin o usuario)
 function requireAuth(req, res, next) {
   const token = req.cookies && req.cookies[COOKIE_ACCESS];
   if (!token) return next(new HttpError(401, 'Autenticación requerida'));
 
   try {
     const payload = verificarAccess(token);
-    req.admin = { id: payload.sub, username: payload.username };
+    req.sesion = { id: payload.sub, nombre: payload.nombre, rol: payload.rol };
     req.csrf = payload.csrf;
     next();
   } catch (err) {
     next(new HttpError(401, 'Sesión inválida o expirada'));
   }
+}
+
+// Autorización: solo los administradores pueden modificar datos
+function requireAdmin(req, res, next) {
+  if (!req.sesion || req.sesion.rol !== 'admin') {
+    return next(new HttpError(403, 'Se requieren permisos de administrador'));
+  }
+  next();
 }
 
 // Anti-CSRF: el header debe coincidir con el valor guardado dentro del JWT
@@ -36,7 +39,7 @@ function requireCsrf(req, res, next) {
   next();
 }
 
-// Para POST, PUT y DELETE: autenticado + CSRF (el orden importa)
-const protegerEscritura = [requireAuth, requireCsrf];
+// Para POST, PUT y DELETE: autenticado + administrador + CSRF (el orden importa)
+const protegerEscritura = [requireAuth, requireAdmin, requireCsrf];
 
-export { requireAuth, requireCsrf, protegerEscritura };
+export { requireAuth, requireAdmin, requireCsrf, protegerEscritura };

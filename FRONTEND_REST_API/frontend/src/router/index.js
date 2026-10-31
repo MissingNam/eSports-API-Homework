@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 import LoginView from '../views/LoginView.vue'
+import PerfilView from '../views/PerfilView.vue'
 import PanelView from '../views/PanelView.vue'
 import InicioView from '../views/InicioView.vue'
 import JugadoresView from '../views/JugadoresView.vue'
@@ -11,10 +12,11 @@ const router = createRouter({
   history: createWebHistory(),
   routes: [
     { path: '/login', name: 'login', component: LoginView, meta: { soloInvitado: true } },
+    { path: '/perfil', name: 'perfil', component: PerfilView, meta: { requiereAuth: true, soloUsuario: true } },
     {
       path: '/',
       component: PanelView,
-      meta: { requiereAuth: true },
+      meta: { requiereAuth: true, soloAdmin: true },
       children: [
         { path: '', name: 'inicio', component: InicioView },
         { path: 'jugadores', name: 'jugadores', component: JugadoresView },
@@ -31,8 +33,12 @@ router.beforeEach(async (to) => {
 
   if (!auth.verificada) await auth.restaurarSesion()
 
+  const destino = auth.esAdmin ? 'inicio' : 'perfil'
+
   if (to.meta.requiereAuth && !auth.estaAutenticado) return { name: 'login' }
-  if (to.meta.soloInvitado && auth.estaAutenticado) return { name: 'inicio' }
+  if (to.meta.soloAdmin && !auth.esAdmin) return { name: 'perfil' }
+  if (to.meta.soloUsuario && auth.esAdmin) return { name: 'inicio' }
+  if (to.meta.soloInvitado && auth.estaAutenticado) return { name: destino }
 })
 
 export default router

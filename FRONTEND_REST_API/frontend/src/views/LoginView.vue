@@ -3,6 +3,10 @@ import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
+
+const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1'
+const googleUrl = `${API_URL}/auth/google/login`
+
 const auth = useAuthStore()
 const router = useRouter()
 const route = useRoute()
@@ -40,6 +44,9 @@ async function enviar() {
       <p v-if="route.query.expirada" class="mensaje-aviso">
         Tu sesión expiró. Inicia sesión de nuevo.
       </p>
+      <p v-if="route.query.error === 'google'" class="mensaje-error">
+        No se pudo iniciar sesión con Google. Inténtalo de nuevo.
+      </p>
       <p v-if="error" class="mensaje-error">{{ error }}</p>
 
       <div class="campo">
@@ -55,6 +62,11 @@ async function enviar() {
       <button class="btn-oro" type="submit" :disabled="cargando">
         {{ cargando ? 'Entrando...' : 'Iniciar sesión' }}
       </button>
+      <div class="separador"><span>o</span></div>
+      <a :href="googleUrl" class="btn-google">
+        <img src="/google.svg" alt="" width="20" height="20" />
+        Iniciar sesión con Google
+      </a>
     </form>
   </main>
 </template>
@@ -105,4 +117,41 @@ h1 {
 .arriba-der { top: -2px; right: -2px; border-left: 0; border-bottom: 0; }
 .abajo-izq { bottom: -2px; left: -2px; border-right: 0; border-top: 0; }
 .abajo-der { bottom: -2px; right: -2px; border-left: 0; border-top: 0; }
+
+.separador {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.8rem;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+}
+
+.separador::before,
+.separador::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--oro-oscuro);
+}
+
+.btn-google {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 10px 16px;
+  color: #e3e3e3;
+  background: #131314;
+  border: 1px solid #8e918f;
+  font-family: var(--fuente-texto);
+  font-weight: 700;
+  text-decoration: none;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.btn-google:hover {
+  border-color: var(--oro-claro);
+  box-shadow: 0 0 14px rgba(200, 170, 110, 0.3);
+}
 </style>

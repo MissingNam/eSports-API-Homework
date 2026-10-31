@@ -5,16 +5,21 @@ import { setCsrfToken } from '../api/http'
 
 export const useAuthStore = defineStore('auth', () => {
   const admin = ref(null)
+  const usuario = ref(null) // sesión de Google (solo lectura)
   const verificada = ref(false) // ya preguntamos al servidor si hay sesión al abrir la app
-  const estaAutenticado = computed(() => admin.value !== null)
+
+  const esAdmin = computed(() => admin.value !== null)
+  const estaAutenticado = computed(() => admin.value !== null || usuario.value !== null)
 
   function guardarSesion(datos) {
-    admin.value = datos.admin
+    admin.value = datos.admin ?? null
+    usuario.value = datos.usuario ?? null
     setCsrfToken(datos.csrfToken)
   }
 
   function limpiarSesion() {
     admin.value = null
+    usuario.value = null
     setCsrfToken(null)
   }
 
@@ -42,5 +47,8 @@ export const useAuthStore = defineStore('auth', () => {
     limpiarSesion()
   }
 
-  return { admin, verificada, estaAutenticado, restaurarSesion, iniciarSesion, cerrarSesion, limpiarSesion }
+  return {
+    admin, usuario, verificada, esAdmin, estaAutenticado,
+    restaurarSesion, iniciarSesion, cerrarSesion, limpiarSesion
+  }
 })

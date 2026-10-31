@@ -91,11 +91,69 @@ paths:
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/SesionAdmin'
+                $ref: '#/components/schemas/SesionActual'
         '401':
           $ref: '#/components/responses/NoAutenticado'
         '500':
           $ref: '#/components/responses/ErrorInterno'
+
+  /auth/google/login:
+    get:
+      tags: [Autenticación]
+      summary: Iniciar sesión con Google (redirige a Google)
+      description: |
+        Debe abrirse desde el navegador; "Try it out" no puede seguir la redirección a Google.
+        Guarda la cookie temporal `oauth_state` y redirige a la pantalla de login de Google.
+      responses:
+        '302':
+          description: Redirección a Google
+          headers:
+            Location:
+              description: URL de login de Google
+              schema:
+                type: string
+            Set-Cookie:
+              description: Cookie temporal oauth_state (HttpOnly, SameSite=Lax, 10 min)
+              schema:
+                type: string
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+
+  /auth/google/callback:
+    get:
+      tags: [Autenticación]
+      summary: Retorno de Google (uso interno)
+      description: |
+        Google redirige aquí al navegador. Siempre responde con una redirección al frontend:
+        - **Éxito:** `/` del frontend, con la cookie `access_token` (rol `usuario`). El usuario se registra o actualiza en la tabla `usuarios`.
+        - **Fallo o cancelación:** `/login?error=google`.
+      parameters:
+        - in: query
+          name: code
+          schema:
+            type: string
+          description: Código de autorización que entrega Google
+        - in: query
+          name: state
+          schema:
+            type: string
+          description: Debe coincidir con la cookie oauth_state
+        - in: query
+          name: error
+          schema:
+            type: string
+          description: Presente si el usuario canceló en Google (p. ej. access_denied)
+      responses:
+        '302':
+          description: Redirección al frontend
+          headers:
+            Location:
+              schema:
+                type: string
+            Set-Cookie:
+              description: En caso de éxito, la cookie access_token (HttpOnly, SameSite=Lax)
+              schema:
+                type: string
 
   # ---------------------------- JUGADORES ----------------------------
   /jugadores:
@@ -897,6 +955,37 @@ components:
           description: Mensajes específicos de validación (solo en algunos errores 400)
           items:
             type: string
+          
+    Usuario:
+      type: object
+      properties:
+        id:
+          type: integer
+          example: 1
+        nombre:
+          type: string
+          example: María Pérez
+        email:
+          type: string
+          example: maria@gmail.com
+        foto:
+          type: string
+          nullable: true
+
+    SesionActual:
+      type: object
+      properties:
+        rol:
+          type: string
+          enum: [admin, usuario]
+        admin:
+          $ref: '#/components/schemas/Admin'
+          description: Solo si rol = admin
+        usuario:
+          $ref: '#/components/schemas/Usuario'
+          description: Solo si rol = usuario
+        csrfToken:
+          type: string
 
   responses:
     NoAutenticado:
@@ -906,7 +995,7 @@ components:
           schema:
             $ref: '#/components/schemas/Error'
     CsrfInvalido:
-      description: Falta el header X-CSRF-Token o no coincide con el de la sesión
+      description: La sesión no es de administrador, o falta el header X-CSRF-Token o no coincide con el de la sesión
       content:
         application/json:
           schema:
