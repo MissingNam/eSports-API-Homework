@@ -4,7 +4,8 @@ import * as rostersApi from '../api/rosters'
 import AsignarJugadorModal from './AsignarJugadorModal.vue'
 
 const props = defineProps({
-  roster: { type: Object, required: true }
+  roster: { type: Object, required: true },
+  editable: { type: Boolean, default: false }
 })
 const emit = defineEmits(['editar', 'eliminar'])
 
@@ -111,7 +112,7 @@ function alAsignar() {
         <span class="cantidad">{{ cantidad }} {{ cantidad === 1 ? 'jugador' : 'jugadores' }}</span>
       </button>
 
-      <div class="acciones">
+      <div v-if="editable" class="acciones">
         <button class="btn-icono peligro" type="button" title="Eliminar roster" :aria-label="`Eliminar el roster ${roster.nombre}`" @click="emit('eliminar', roster)">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" />
@@ -146,6 +147,7 @@ function alAsignar() {
         <div v-else class="jugadores">
           <div v-for="j in ordenados" :key="j.id" class="miembro">
             <button
+              v-if="editable"
               class="btn-icono peligro quitar"
               type="button"
               title="Quitar del roster"
@@ -160,6 +162,7 @@ function alAsignar() {
             <span class="insignia">{{ j.rol }}</span>
 
             <select
+              v-if="editable"
               class="entrada rol-roster"
               :value="j.rol_en_roster"
               :disabled="ocupado === j.id"
@@ -168,10 +171,11 @@ function alAsignar() {
             >
               <option v-for="r in ROLES_EN_ROSTER" :key="r" :value="r">{{ r }}</option>
             </select>
+            <span v-else class="insignia">{{ j.rol_en_roster }}</span>
           </div>
         </div>
 
-        <button class="agregar-jugador" type="button" title="Añadir jugador al roster" aria-label="Añadir jugador al roster" @click="asignarAbierto = true">
+        <button v-if="editable" class="agregar-jugador" type="button" title="Añadir jugador al roster" aria-label="Añadir jugador al roster" @click="asignarAbierto = true">
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
         </button>
       </template>

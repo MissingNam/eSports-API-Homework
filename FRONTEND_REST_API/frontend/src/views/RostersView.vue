@@ -5,6 +5,10 @@ import * as aux from '../api/auxiliares'
 import RosterItem from '../components/RosterItem.vue'
 import RosterForm from '../components/RosterForm.vue'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
+import { useAuthStore } from '../stores/auth'
+
+const auth = useAuthStore()
+const puedeEditar = computed(() => auth.esAdmin)
 
 // ---------- Listado ----------
 const rosters = ref([])
@@ -121,7 +125,7 @@ async function confirmarEliminar() {
         placeholder="Buscar roster por nombre..."
         aria-label="Buscar roster por nombre"
       />
-      <button class="btn-agregar" type="button" title="Añadir roster" aria-label="Añadir roster" @click="abrirFormulario()">
+      <button v-if="puedeEditar" class="btn-agregar" type="button" title="Añadir roster" aria-label="Añadir roster" @click="abrirFormulario()">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
       </button>
     </div>
@@ -158,6 +162,7 @@ async function confirmarEliminar() {
         v-for="r in visibles"
         :key="r.id"
         :roster="r"
+        :editable="puedeEditar"
         @editar="abrirFormulario"
         @eliminar="pedirEliminar"
       />

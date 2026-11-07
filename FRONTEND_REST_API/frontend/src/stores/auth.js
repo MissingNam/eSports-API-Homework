@@ -9,6 +9,7 @@ export const useAuthStore = defineStore('auth', () => {
   const verificada = ref(false) // ya preguntamos al servidor si hay sesión al abrir la app
 
   const esAdmin = computed(() => admin.value !== null)
+  const nombreVisible = computed(() => admin.value?.username ?? usuario.value?.nombre ?? '')
   const estaAutenticado = computed(() => admin.value !== null || usuario.value !== null)
 
   function guardarSesion(datos) {
@@ -47,8 +48,12 @@ export const useAuthStore = defineStore('auth', () => {
     limpiarSesion()
   }
 
+  async function registrar(nombre, email, password) {
+    guardarSesion(await authApi.registro(nombre, email, password))
+  }
+
   return {
     admin, usuario, verificada, esAdmin, estaAutenticado,
-    restaurarSesion, iniciarSesion, cerrarSesion, limpiarSesion
+    restaurarSesion, iniciarSesion, cerrarSesion, limpiarSesion, registrar, nombreVisible
   }
 })

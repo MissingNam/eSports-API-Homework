@@ -155,6 +155,44 @@ paths:
               schema:
                 type: string
 
+  /auth/registro:
+    post:
+      tags: [Autenticación]
+      summary: Registrar un usuario con correo y contraseña
+      description: Crea la cuenta (rol `usuario`) e inicia sesión de inmediato; guarda la cookie `access_token` y devuelve el `csrfToken`.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegistroUsuario'
+      responses:
+        '201':
+          description: Cuenta creada y sesión iniciada
+          headers:
+            Set-Cookie:
+              description: Cookie access_token (HttpOnly, SameSite=Lax)
+              schema:
+                type: string
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SesionActual'
+        '400':
+          description: Nombre, correo o contraseña inválidos
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Ya existe una cuenta con ese correo
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          $ref: '#/components/responses/ErrorInterno'
+
   # ---------------------------- JUGADORES ----------------------------
   /jugadores:
     get:
@@ -1024,3 +1062,20 @@ components:
         application/json:
           schema:
             $ref: '#/components/schemas/Error'
+    RegistroUsuario:
+      type: object
+      required: [nombre, email, password]
+      properties:
+        nombre:
+          type: string
+          maxLength: 100
+          example: Usuario Prueba
+        email:
+          type: string
+          format: email
+          example: prueba@correo.com
+        password:
+          type: string
+          format: password
+          minLength: 8
+          maxLength: 72

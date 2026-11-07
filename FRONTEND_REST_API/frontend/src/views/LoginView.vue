@@ -50,7 +50,7 @@ async function enviar() {
       <p v-if="error" class="mensaje-error">{{ error }}</p>
 
       <div class="campo">
-        <label for="username">Usuario</label>
+                <label for="username">Usuario o correo</label>
         <input id="username" v-model="username" type="text" autocomplete="username" required autofocus />
       </div>
 
@@ -67,6 +67,9 @@ async function enviar() {
         <img src="/google.svg" alt="" width="20" height="20" />
         Iniciar sesión con Google
       </a>
+      <p class="alterno">
+        ¿No tienes cuenta? <RouterLink :to="{ name: 'registro' }">Crear cuenta</RouterLink>
+      </p>
     </form>
   </main>
 </template>

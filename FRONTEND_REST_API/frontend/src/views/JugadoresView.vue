@@ -5,6 +5,11 @@ import * as aux from '../api/auxiliares'
 import JugadorForm from '../components/JugadorForm.vue'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
 
+import { useAuthStore } from '../stores/auth'
+
+const auth = useAuthStore()
+const puedeEditar = computed(() => auth.esAdmin)
+
 // ---------- Listado y filtros ----------
 const jugadores = ref([])
 const cargando = ref(true)
@@ -121,7 +126,7 @@ async function confirmarEliminar() {
         placeholder="Buscar jugador por nickname..."
         aria-label="Buscar jugador por nickname"
       />
-      <button class="btn-agregar" type="button" title="Añadir jugador" aria-label="Añadir jugador" @click="abrirFormulario()">
+      <button v-if="puedeEditar" class="btn-agregar" type="button" title="Añadir jugador" @click="abrirFormulario()">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
       </button>
     </div>
@@ -155,7 +160,7 @@ async function confirmarEliminar() {
 
     <div v-else class="rejilla">
       <article v-for="j in jugadores" :key="j.id" class="jugador">
-        <div class="acciones">
+        <div v-if="puedeEditar" class="acciones">
           <button class="btn-icono peligro" type="button" title="Eliminar" :aria-label="`Eliminar a ${j.nickname}`" @click="pedirEliminar(j)">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" />

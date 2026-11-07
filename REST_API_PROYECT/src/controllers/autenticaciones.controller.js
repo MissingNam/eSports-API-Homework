@@ -23,14 +23,26 @@ const nuevoCsrf = () => crypto.randomBytes(32).toString('hex');
 
 // ---------- Administrador (usuario + contraseña) ----------
 const login = asyncHandler(async (req, res) => {
-  const admin = await service.login(req.body);
+  const sesion = await service.login(req.body)
 
-  const csrfToken = nuevoCsrf();
-  setAccessCookie(res, firmarAccess({ id: admin.id, nombre: admin.username, rol: 'admin' }, csrfToken));
+  const csrfToken = nuevoCsrf()
+  setAccessCookie(res, firmarAccess({ id: sesion.id, nombre: sesion.nombre, rol: sesion.rol }, csrfToken))
 
-  // El JWT viaja en la cookie (HttpOnly); el csrfToken sí lo recibe el frontend
-  res.status(200).json({ admin, csrfToken });
-});
+  res.status(200).json({ rol: sesion.rol, ...sesion.perfil, csrfToken })
+})
+
+const registro = asyncHandler(async (req, res) => {
+  const u = await usuariosService.registrarLocal(req.body)
+
+  const csrfToken = nuevoCsrf()
+  setAccessCookie(res, firmarAccess({ id: u.id, nombre: u.nombre, rol: 'usuario' }, csrfToken))
+
+  res.status(201).json({
+    rol: 'usuario',
+    usuario: { id: u.id, nombre: u.nombre, email: u.email, foto: u.foto },
+    csrfToken
+  })
+})
 
 const logout = asyncHandler(async (req, res) => {
   clearAccessCookie(res);
@@ -80,4 +92,4 @@ const googleCallback = async (req, res) => {
   }
 };
 
-export { login, logout, me, googleLogin, googleCallback };
+export { login, registro, logout, me, googleLogin, googleCallback };

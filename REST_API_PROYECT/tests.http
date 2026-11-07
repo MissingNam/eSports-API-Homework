@@ -219,3 +219,25 @@ host: localhost:3000
 # @no-redirect
 GET /api/v1/auth/google/callback?code=x&state=x HTTP/1.1
 host: localhost:3000
+
+### Registrar un usuario (inicia sesion automaticamente)
+POST /api/v1/auth/registro HTTP/1.1
+host: localhost:3000
+Content-Type: application/json
+
+{
+  "nombre": "Usuario Prueba",
+  "email": "prueba@correo.com",
+  "password": "Prueba1234"
+}
+
+
+### Login de usuario con correo
+POST /api/v1/auth/login HTTP/1.1
+host: localhost:3000
+Content-Type: application/json
+
+{
+  "username": "prueba@correo.com",
+  "password": "Prueba1234"
+}

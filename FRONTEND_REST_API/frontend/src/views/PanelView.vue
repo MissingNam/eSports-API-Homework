@@ -15,13 +15,15 @@ async function salir() {
   <div class="panel">
     <header class="barra">
       <button class="btn-enlace" @click="salir">Cerrar sesión</button>
-      <RouterLink :to="{ name: 'inicio' }" class="marca">Panel de Administración</RouterLink>
-      <span class="usuario">{{ auth.admin?.username }}</span>
+      <RouterLink :to="{ name: auth.esAdmin ? 'inicio' : 'jugadores' }" class="marca">
+  {{ auth.esAdmin ? 'Panel de Administración' : 'Panel de Visualización' }}
+</RouterLink>
+      <span class="usuario">{{ auth.nombreVisible }}</span>
     </header>
 
     <div class="cuerpo">
       <nav class="tabs">
-          <RouterLink :to="{ name: 'inicio' }" class="tab">
+          <RouterLink v-if="auth.esAdmin" :to="{ name: 'inicio' }" class="tab">
             <svg viewBox="0 0 24 24" aria-hidden="true">
               <path d="M3 11l9-8 9 8M5 10v10h5v-6h4v6h5V10" />
             </svg>
@@ -40,7 +42,7 @@ async function salir() {
           </svg>
           Roster
         </RouterLink>
-        <RouterLink :to="{ name: 'recursos' }" class="tab">
+        <RouterLink v-if="auth.esAdmin" :to="{ name: 'recursos' }" class="tab">
           <svg viewBox="0 0 24 24" aria-hidden="true">
             <path d="M5 4h11a3 3 0 0 1 3 3v13H8a3 3 0 0 1-3-3V4z" />
             <path d="M5 17a3 3 0 0 1 3-3h11" />
