@@ -5,7 +5,7 @@
 // const jugadoresService = require('./jugadores.service');
 
 import { Op } from 'sequelize';
-import { Jugador, RosterJugador } from '../../models/index.js';
+import { RosterJugador } from '../../models/index.js';
 import { HttpError } from '../utils/errors.js';
 import * as rostersService from './rosters.service.js'
 import * as jugadoresService from './jugadores.service.js'
@@ -21,17 +21,12 @@ function validarRolEnRoster(valor) {
 
 // RN-03 y RN-02: se revisan antes de dejar a alguien como titular.
 // "excluirIdJugador" sirve en el PUT: el propio jugador no cuenta contra sí mismo.
-async function validarTitular(idRoster, jugador, excluirIdJugador = null) {
-  const where = { id_roster: idRoster, rol_en_roster: 'Titular' };
-  if (excluirIdJugador) where.id_jugador = { [Op.ne]: excluirIdJugador };
-
-  const filas = await RosterJugador.findAll({ where, attributes: ['id_jugador'] });
-  const titulares = filas.length
-    ? await Jugador.findAll({
-        where: { id: filas.map((f) => f.id_jugador) },
-        attributes: ['id', 'nickname', 'rol']
-      })
-    : [];
+async function validarTitular(roster, jugador, excluirIdJugador = null) {
+  const titulares = await roster.getJugadores({
+    attributes: ['id', 'nickname', 'rol'],
+    where: excluirIdJugador ? { id: { [Op.ne]: excluirIdJugador } } : undefined,
+    through: { where: { rol_en_roster: 'Titular' }, attributes: [] }
+  });
 
   // RN-03: no dos titulares con el mismo rol
   const repetido = titulares.find((t) => t.rol === jugador.rol);
@@ -71,20 +66,13 @@ async function asignar(idRoster, body = {}) {
 
   const jugador = await jugadoresService.obtener(body.id_jugador);    // 404 jugador
 
-  const yaAsignado = await RosterJugador.findOne({
-    where: { id_roster: roster.id, id_jugador: jugador.id }
-  });
-  if (yaAsignado) throw new HttpError(409, 'El jugador ya está en este roster');
+  if (await roster.hasJugador(jugador)) throw new HttpError(409, 'El jugador ya está en este roster');
 
   if (body.rol_en_roster === 'Titular') {
-    await validarTitular(roster.id, jugador);                         // 409
+    await validarTitular(roster, jugador);                         // 409
   }
 
-  await RosterJugador.create({
-    id_roster: roster.id,
-    id_jugador: jugador.id,
-    rol_en_roster: body.rol_en_roster
-  });
+  await roster.addJugador(jugador, { through: { rol_en_roster: body.rol_en_roster } });
 
   return {
     id: jugador.id,
@@ -101,7 +89,7 @@ async function cambiarRol(idRoster, idJugador, body = {}) {
   const asignacion = await buscarAsignacion(roster.id, jugador.id);
 
   if (body.rol_en_roster === 'Titular') {
-    await validarTitular(roster.id, jugador, jugador.id);
+    await validarTitular(roster, jugador, jugador.id);
   }
 
   await asignacion.update({ rol_en_roster: body.rol_en_roster });
