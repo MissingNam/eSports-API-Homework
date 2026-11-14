@@ -4,7 +4,7 @@
 
 import { Op } from 'sequelize';
 import { HttpError } from '../utils/errors.js';
-import { Jugador, Roster, RosterJugador } from '../../models/index.js';
+import { Jugador } from '../../models/index.js';
 
 const CAMPOS = ['nickname', 'nombre_real', 'pais', 'rol', 'estado'];
 
@@ -40,36 +40,30 @@ async function crear(body) {
   return Jugador.create(filtrarCampos(body));
 }
 
-// AQUI ESTA SU VALIDACION DE CAMBIO DE ROL
+// RN-03 al cambiar el rol de un jugador que ya es titular en algún roster
 async function validarCambioDeRol(jugador, nuevoRol) {
-  const comoTitular = await RosterJugador.findAll({
-    where: { id_jugador: jugador.id, rol_en_roster: 'Titular' },
-    attributes: ['id_roster']
+  // Rosters donde este jugador es titular
+  const rosters = await jugador.getRosters({
+    attributes: ['id'],
+    through: { where: { rol_en_roster: 'Titular' }, attributes: [] }
   });
-  if (comoTitular.length === 0) return;
+  if (rosters.length === 0) return;
 
-  const otrosTitulares = await RosterJugador.findAll({
-    where: {
-      id_roster: comoTitular.map((f) => f.id_roster),
-      rol_en_roster: 'Titular',
-      id_jugador: { [Op.ne]: jugador.id }
-    },
-    attributes: ['id_roster', 'id_jugador']
-  });
-  if (otrosTitulares.length === 0) return;
-
-
+  // Otros jugadores con el nuevo rol que sean titulares en alguno de esos rosters
   const coincidentes = await Jugador.findAll({
-    where: { id: otrosTitulares.map((o) => o.id_jugador), rol: nuevoRol },
-    attributes: ['id', 'nickname']
+    where: { rol: nuevoRol, id: { [Op.ne]: jugador.id } },
+    attributes: ['id', 'nickname'],
+    include: {
+      association: 'rosters',
+      attributes: ['id', 'nombre'],
+      where: { id: rosters.map((r) => r.id) },
+      through: { where: { rol_en_roster: 'Titular' }, attributes: [] }
+    }
   });
   if (coincidentes.length === 0) return;
 
-  const choque = otrosTitulares.find((o) =>
-    coincidentes.some((c) => c.id === o.id_jugador)
-  );
-  const roster = await Roster.findByPk(choque.id_roster);
-  const otro = coincidentes.find((c) => c.id === choque.id_jugador);
+  const otro = coincidentes[0];
+  const roster = otro.rosters[0];
 
   throw new HttpError(
     409,

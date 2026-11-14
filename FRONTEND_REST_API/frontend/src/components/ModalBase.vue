@@ -1,89 +1,66 @@
 <script setup>
-import { onMounted, onBeforeUnmount } from 'vue'
-
 defineProps({
   titulo: { type: String, required: true },
   ancho: { type: String, default: '460px' }
 })
 const emit = defineEmits(['cerrar'])
-
-function alTeclear(e) {
-  if (e.key === 'Escape') emit('cerrar')
-}
-onMounted(() => window.addEventListener('keydown', alTeclear))
-onBeforeUnmount(() => window.removeEventListener('keydown', alTeclear))
 </script>
 
 <template>
-  <Teleport to="body">
-    <div class="fondo">
-      <div class="modal" role="dialog" aria-modal="true" :style="{ maxWidth: ancho }">
-        <header class="encabezado">
-          <h3>{{ titulo }}</h3>
-          <button class="btn-icono" type="button" aria-label="Cerrar" @click="emit('cerrar')">
-            <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
-          </button>
-        </header>
+  <!-- v-dialog ya se encarga de Teleport, scrim, foco, scroll lock y tecla Escape -->
+  <v-dialog
+    :model-value="true"
+    :max-width="ancho"
+    scrollable
+    scrim="azul-noche"
+    @update:model-value="emit('cerrar')"
+  >
+    <v-card class="modal-base">
+      <v-card-title class="d-flex align-center justify-space-between py-3">
+        <h3 class="text-subtitle-1 text-primary">{{ titulo }}</h3>
+        <v-btn icon variant="text" size="small" aria-label="Cerrar" @click="emit('cerrar')">
+          <svg class="icono-x" viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
+        </v-btn>
+      </v-card-title>
 
-        <div class="cuerpo">
-          <slot />
-        </div>
+      <v-divider class="borde-oro" />
 
-        <footer v-if="$slots.pie" class="pie">
+      <v-card-text class="d-flex flex-column ga-4 pa-5">
+        <slot />
+      </v-card-text>
+
+      <template v-if="$slots.pie">
+        <v-divider class="borde-oro" />
+        <v-card-actions class="px-5 py-3 ga-3">
+          <v-spacer />
           <slot name="pie" />
-        </footer>
-      </div>
-    </div>
-  </Teleport>
+        </v-card-actions>
+      </template>
+    </v-card>
+  </v-dialog>
 </template>
 
 <style scoped>
-.fondo {
-  position: fixed;
-  inset: 0;
-  z-index: 100;
-  display: grid;
-  place-items: center;
-  padding: 20px;
-  background: rgba(1, 10, 19, 0.82);
+.modal-base {
+  background: linear-gradient(180deg, rgb(var(--v-theme-surface)), rgb(var(--v-theme-azul-profundo)));
+  border: 1px solid rgb(var(--v-theme-primary));
+  box-shadow:
+    0 0 0 4px rgb(var(--v-theme-azul-noche)),
+    0 0 0 5px rgb(var(--v-theme-oro-oscuro)),
+    0 24px 70px rgba(0, 0, 0, 0.8);
 }
 
-.modal {
-  width: 100%;
-  max-height: 100%;
-  display: flex;
-  flex-direction: column;
-  background: linear-gradient(180deg, var(--azul-panel), var(--azul-profundo));
-  border: 1px solid var(--oro);
-  box-shadow: 0 0 0 4px var(--azul-noche), 0 0 0 5px var(--oro-oscuro), 0 24px 70px rgba(0, 0, 0, 0.8);
+.icono-x {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
 }
 
-.encabezado {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 16px 20px;
-  border-bottom: 1px solid var(--oro-oscuro);
-}
-
-h3 {
-  font-size: 1.1rem;
-  color: var(--oro);
-}
-
-.cuerpo {
-  padding: 20px;
-  overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.pie {
-  display: flex;
-  justify-content: flex-end;
-  gap: 12px;
-  padding: 14px 20px;
-  border-top: 1px solid var(--oro-oscuro);
+.borde-oro {
+  border-color: rgb(var(--v-theme-oro-oscuro));
+  opacity: 1;
 }
 </style>

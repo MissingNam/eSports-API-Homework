@@ -17,7 +17,7 @@ const cargandoLista = ref(true)
 const errorLista = ref('')
 
 const busqueda = ref('')
-const seleccion = ref(null)
+const seleccion = ref([]) // v-list entrega un arreglo; con "single-independent" tiene 0 o 1 id
 const rolEnRoster = ref('Titular')
 
 const guardando = ref(false)
@@ -45,11 +45,11 @@ async function cargarLista() {
 onMounted(cargarLista)
 
 async function asignar() {
-  if (seleccion.value === null) return
+  if (!seleccion.value.length) return
   error.value = ''
   guardando.value = true
   try {
-    await asignarJugador(props.idRoster, seleccion.value, rolEnRoster.value)
+    await asignarJugador(props.idRoster, seleccion.value[0], rolEnRoster.value)
     emit('asignado')
   } catch (e) {
     // 409: ya hay un titular con ese rol, ya hay 5 titulares... el usuario puede probar como Suplente
@@ -68,10 +68,12 @@ function cerrar() {
   <ModalBase titulo="Añadir jugador al roster" ancho="520px" @cerrar="cerrar">
     <p v-if="cargandoLista" class="aviso">Cargando jugadores...</p>
 
-    <p v-else-if="errorLista" class="mensaje-error">
+    <v-alert v-else-if="errorLista" type="error">
       {{ errorLista }}
-      <button class="btn-enlace" type="button" @click="cargarLista">Reintentar</button>
-    </p>
+      <template #append>
+        <v-btn size="small" variant="outlined" @click="cargarLista">Reintentar</v-btn>
+      </template>
+    </v-alert>
 
     <p v-else-if="!todos.length" class="aviso">
       No hay jugadores registrados. Créalos primero en la pestaña Jugadores.
@@ -80,39 +82,61 @@ function cerrar() {
     <p v-else-if="!hayDisponibles" class="aviso">Todos los jugadores ya están en este roster.</p>
 
     <template v-else>
-      <input
+      <v-text-field
         v-model="busqueda"
-        class="entrada"
         type="search"
         placeholder="Buscar jugador..."
         aria-label="Buscar jugador"
+        density="compact"
+        hide-details
       />
 
-      <div class="lista" role="radiogroup" aria-label="Jugadores disponibles">
-        <label v-for="j in disponibles" :key="j.id" class="opcion" :class="{ elegida: seleccion === j.id }">
-          <input v-model="seleccion" type="radio" name="jugador" :value="j.id" />
-          <span class="nick">{{ j.nickname }}</span>
-          <span class="insignia">{{ j.rol }}</span>
-          <span class="insignia" :class="j.estado">{{ j.estado }}</span>
-        </label>
+      <v-list
+        v-model:selected="seleccion"
+        class="lista"
+        select-strategy="single-independent"
+        color="primary"
+        density="compact"
+        aria-label="Jugadores disponibles"
+      >
+        <v-list-item
+          v-for="j in disponibles"
+          :key="j.id"
+          :value="j.id"
+          :title="j.nickname"
+          class="opcion"
+        >
+          <template #append>
+            <v-chip label size="small" variant="outlined" color="primary" class="mr-2">{{ j.rol }}</v-chip>
+            <v-chip
+              label
+              size="small"
+              variant="outlined"
+              :color="j.estado === 'activo' ? 'success' : undefined"
+            >
+              {{ j.estado }}
+            </v-chip>
+          </template>
+        </v-list-item>
         <p v-if="!disponibles.length" class="aviso">Ningún jugador coincide con la búsqueda.</p>
-      </div>
+      </v-list>
 
-      <div class="campo">
-        <label for="a-rol">Rol en el roster</label>
-        <select id="a-rol" v-model="rolEnRoster">
-          <option v-for="r in ROLES_EN_ROSTER" :key="r" :value="r">{{ r }}</option>
-        </select>
-      </div>
+      <v-select v-model="rolEnRoster" :items="ROLES_EN_ROSTER" label="Rol en el roster" hide-details />
 
-      <p v-if="error" class="mensaje-error">{{ error }}</p>
+      <v-alert v-if="error" type="error">{{ error }}</v-alert>
     </template>
 
     <template #pie>
-      <button class="btn-enlace" type="button" :disabled="guardando" @click="cerrar">Cancelar</button>
-      <button class="btn-oro" type="button" :disabled="guardando || seleccion === null" @click="asignar">
+      <v-btn variant="outlined" color="primary" :disabled="guardando" @click="cerrar">Cancelar</v-btn>
+      <v-btn
+        color="primary"
+        variant="flat"
+        :loading="guardando"
+        :disabled="!seleccion.length"
+        @click="asignar"
+      >
         {{ guardando ? 'Añadiendo...' : 'Añadir al roster' }}
-      </button>
+      </v-btn>
     </template>
   </ModalBase>
 </template>
@@ -127,48 +151,13 @@ function cerrar() {
 .lista {
   max-height: 280px;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
+  background: transparent;
 }
 
 .opcion {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  padding: 9px 12px;
-  background: var(--azul-noche);
-  border: 1px solid var(--azul-borde);
-  border-left: 3px solid var(--oro-oscuro);
-  cursor: pointer;
-  transition: border-color 0.15s, background 0.15s;
-}
-
-.opcion:hover {
-  border-color: var(--oro-oscuro);
-}
-
-.opcion.elegida {
-  background: rgba(200, 170, 110, 0.14);
-  border-color: var(--oro);
-}
-
-/* el radio queda oculto pero accesible por teclado */
-.opcion input {
-  position: absolute;
-  opacity: 0;
-  pointer-events: none;
-}
-
-.opcion:has(input:focus-visible) {
-  outline: 2px solid var(--oro);
-}
-
-.nick {
-  flex: 1;
-  min-width: 0;
-  color: var(--texto-fuerte);
-  font-weight: 700;
-  overflow-wrap: anywhere;
+  margin-bottom: 6px;
+  background: rgb(var(--v-theme-azul-noche));
+  border: 1px solid rgb(var(--v-theme-azul-borde));
+  border-left: 3px solid rgb(var(--v-theme-oro-oscuro));
 }
 </style>

@@ -5,6 +5,10 @@ import * as aux from '../api/auxiliares'
 import RosterItem from '../components/RosterItem.vue'
 import RosterForm from '../components/RosterForm.vue'
 import ConfirmDialog from '../components/ConfirmDialog.vue'
+import { useAuthStore } from '../stores/auth'
+
+const auth = useAuthStore()
+const puedeEditar = computed(() => auth.esAdmin)
 
 // ---------- Listado ----------
 const rosters = ref([])
@@ -46,6 +50,10 @@ const temporadas = computed(() =>
 watch(temporadas, (lista) => {
   if (filtroTemporada.value && !lista.includes(filtroTemporada.value)) filtroTemporada.value = ''
 })
+
+// "Todos" usa '' para no cambiar la lógica de filtrado
+const itemsTipo = computed(() => [{ title: 'Todos los tipos', value: '' }, ...tipos.value])
+const itemsTemporada = computed(() => [{ title: 'Todas las temporadas', value: '' }, ...temporadas.value])
 
 const hayFiltros = computed(() => !!(busqueda.value.trim() || filtroTipo.value || filtroTemporada.value))
 
@@ -114,36 +122,56 @@ async function confirmarEliminar() {
     <h2 class="vista-titulo">Roster</h2>
 
     <div class="barra-busqueda">
-      <input
+      <v-text-field
         v-model="busqueda"
-        class="entrada buscador"
         type="search"
         placeholder="Buscar roster por nombre..."
         aria-label="Buscar roster por nombre"
+        hide-details
       />
-      <button class="btn-agregar" type="button" title="Añadir roster" aria-label="Añadir roster" @click="abrirFormulario()">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
-      </button>
+      <v-btn
+        v-if="puedeEditar"
+        icon
+        color="success"
+        variant="flat"
+        width="48"
+        height="48"
+        title="Añadir roster"
+        aria-label="Añadir roster"
+        @click="abrirFormulario()"
+      >
+        <svg class="icono-mas" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+      </v-btn>
     </div>
 
     <div class="filtros">
-      <select v-model="filtroTipo" class="entrada" aria-label="Filtrar por tipo">
-        <option value="">Todos los tipos</option>
-        <option v-for="t in tipos" :key="t" :value="t">{{ t }}</option>
-      </select>
-      <select v-model="filtroTemporada" class="entrada" aria-label="Filtrar por temporada">
-        <option value="">Todas las temporadas</option>
-        <option v-for="t in temporadas" :key="t" :value="t">{{ t }}</option>
-      </select>
+      <v-select
+        v-model="filtroTipo"
+        :items="itemsTipo"
+        aria-label="Filtrar por tipo"
+        density="compact"
+        hide-details
+        class="filtro"
+      />
+      <v-select
+        v-model="filtroTemporada"
+        :items="itemsTemporada"
+        aria-label="Filtrar por temporada"
+        density="compact"
+        hide-details
+        class="filtro"
+      />
       <span v-if="!error && !(cargando && !rosters.length)" class="contador">
         {{ visibles.length }} {{ visibles.length === 1 ? 'roster' : 'rosters' }}
       </span>
     </div>
 
-    <p v-if="error" class="mensaje-error">
+    <v-alert v-if="error" type="error">
       {{ error }}
-      <button class="btn-enlace reintentar" type="button" @click="cargar">Reintentar</button>
-    </p>
+      <template #append>
+        <v-btn size="small" variant="outlined" @click="cargar">Reintentar</v-btn>
+      </template>
+    </v-alert>
 
     <p v-else-if="cargando && !rosters.length" class="aviso">Cargando rosters...</p>
 
@@ -158,6 +186,7 @@ async function confirmarEliminar() {
         v-for="r in visibles"
         :key="r.id"
         :roster="r"
+        :editable="puedeEditar"
         @editar="abrirFormulario"
         @eliminar="pedirEliminar"
       />
@@ -189,13 +218,23 @@ async function confirmarEliminar() {
 <style scoped>
 .barra-busqueda {
   display: flex;
+  align-items: center;
   gap: 12px;
   margin-bottom: 12px;
 }
 
-.buscador {
+.barra-busqueda .v-input {
   flex: 1;
   min-width: 0;
+}
+
+.icono-mas {
+  width: 22px;
+  height: 22px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 2.4;
+  stroke-linecap: round;
 }
 
 .filtros {
@@ -204,6 +243,10 @@ async function confirmarEliminar() {
   align-items: center;
   gap: 12px;
   margin-bottom: 24px;
+}
+
+.filtro {
+  flex: 0 1 220px;
 }
 
 .contador {
@@ -215,10 +258,6 @@ async function confirmarEliminar() {
 .aviso {
   padding: 32px 0;
   text-align: center;
-}
-
-.reintentar {
-  margin-left: 12px;
 }
 
 .lista {

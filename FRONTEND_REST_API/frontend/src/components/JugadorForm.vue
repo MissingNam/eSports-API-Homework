@@ -16,13 +16,15 @@ const form = reactive({
   nickname: props.jugador?.nickname ?? '',
   nombre_real: props.jugador?.nombre_real ?? '',
   pais: props.jugador?.pais ?? '',
-  rol: props.jugador?.rol ?? '',
+  rol: props.jugador?.rol ?? null,
   estado: props.jugador?.estado ?? 'activo'
 })
 
 const cargando = ref(false)
 const error = ref('')
 const detalles = ref([])
+
+const requerido = (v) => !!v?.toString().trim() || 'Campo obligatorio'
 
 function traducirError(e) {
   // El servidor responde un 409 genérico cuando el nickname ya existe
@@ -32,7 +34,11 @@ function traducirError(e) {
   return e.message
 }
 
-async function guardar() {
+// v-form emite un "submit" que se puede await para conocer el resultado de las reglas
+async function guardar(evento) {
+  const { valid } = await evento
+  if (!valid) return
+
   error.value = ''
   detalles.value = []
 
@@ -42,10 +48,6 @@ async function guardar() {
     pais: form.pais.trim() || null,
     rol: form.rol,
     estado: form.estado
-  }
-  if (!datos.nickname) {
-    error.value = 'El nickname es obligatorio.'
-    return
   }
 
   cargando.value = true
@@ -69,70 +71,58 @@ function cerrar() {
 
 <template>
   <ModalBase :titulo="esEdicion ? 'Editar jugador' : 'Nuevo jugador'" @cerrar="cerrar">
-    <form id="form-jugador" class="formulario" @submit.prevent="guardar">
-      <div v-if="error" class="mensaje-error">
+    <v-form id="form-jugador" class="d-flex flex-column ga-4" @submit.prevent="guardar">
+      <v-alert v-if="error" type="error">
         {{ error }}
-        <ul v-if="detalles.length">
+        <ul v-if="detalles.length" class="detalles">
           <li v-for="d in detalles" :key="d">{{ d }}</li>
         </ul>
-      </div>
+      </v-alert>
 
-      <div class="campo">
-        <label for="f-nickname">Nickname *</label>
-        <input id="f-nickname" v-model="form.nickname" type="text" maxlength="50" required autofocus />
-      </div>
+      <v-text-field
+        v-model="form.nickname"
+        label="Nickname *"
+        maxlength="50"
+        autofocus
+        :rules="[requerido]"
+      />
 
-      <div class="campo">
-        <label for="f-nombre">Nombre real</label>
-        <input id="f-nombre" v-model="form.nombre_real" type="text" maxlength="100" />
-      </div>
+      <v-text-field v-model="form.nombre_real" label="Nombre real" maxlength="100" />
 
-      <div class="campo">
-        <label for="f-pais">País</label>
-        <input id="f-pais" v-model="form.pais" type="text" maxlength="60" />
-      </div>
+      <v-text-field v-model="form.pais" label="País" maxlength="60" />
 
-      <div class="fila">
-        <div class="campo">
-          <label for="f-rol">Rol *</label>
-          <select id="f-rol" v-model="form.rol" required>
-            <option value="" disabled>Selecciona un rol</option>
-            <option v-for="r in roles" :key="r" :value="r">{{ r }}</option>
-          </select>
-        </div>
-
-        <div class="campo">
-          <label for="f-estado">Estado *</label>
-          <select id="f-estado" v-model="form.estado" required>
-            <option v-for="e in estados" :key="e" :value="e">{{ e }}</option>
-          </select>
-        </div>
-      </div>
-    </form>
+      <v-row dense>
+        <v-col cols="12" sm="6">
+          <v-select
+            v-model="form.rol"
+            :items="roles"
+            label="Rol *"
+            placeholder="Selecciona un rol"
+            :rules="[(v) => !!v || 'Selecciona un rol']"
+          />
+        </v-col>
+        <v-col cols="12" sm="6">
+          <v-select
+            v-model="form.estado"
+            :items="estados"
+            label="Estado *"
+            :rules="[(v) => !!v || 'Selecciona un estado']"
+          />
+        </v-col>
+      </v-row>
+    </v-form>
 
     <template #pie>
-      <button class="btn-enlace" type="button" :disabled="cargando" @click="cerrar">Cancelar</button>
-      <button class="btn-oro" type="submit" form="form-jugador" :disabled="cargando">
+      <v-btn variant="outlined" color="primary" :disabled="cargando" @click="cerrar">Cancelar</v-btn>
+      <v-btn type="submit" form="form-jugador" color="primary" variant="flat" :loading="cargando">
         {{ cargando ? 'Guardando...' : 'Guardar' }}
-      </button>
+      </v-btn>
     </template>
   </ModalBase>
 </template>
 
 <style scoped>
-.formulario {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.fila {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.mensaje-error ul {
+.detalles {
   margin: 6px 0 0;
   padding-left: 18px;
 }

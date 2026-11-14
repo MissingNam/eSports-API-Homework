@@ -33,8 +33,8 @@ db.sequelize = sequelize;
 db.Sequelize = Sequelize;
 
 // Exports con nombre (para: import { Jugador, sequelize } from '../../models/index.js')
-const { Admin, Jugador, Roster, RosterJugador } = db;
-export { sequelize, Sequelize, Admin, Jugador, Roster, RosterJugador };
+const { Admin, Jugador, Roster, RosterJugador, Usuario } = db;
+export { sequelize, Sequelize, Admin, Jugador, Roster, RosterJugador, Usuario };
 
 // Export por defecto (para: import db from '../../models/index.js')
-export default db;
+export default { db } ;
