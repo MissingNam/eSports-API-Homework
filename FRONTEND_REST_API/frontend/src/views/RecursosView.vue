@@ -31,16 +31,16 @@ onMounted(async () => {
     <h2 class="vista-titulo">Recursos</h2>
 
     <p v-if="cargando">Cargando...</p>
-    <p v-else-if="error" class="mensaje-error">{{ error }}</p>
+    <v-alert v-else-if="error" type="error">{{ error }}</v-alert>
 
     <div v-else class="rejilla">
-      <article v-for="g in grupos" :key="g.ruta" class="tarjeta-panel">
+      <v-card v-for="g in grupos" :key="g.ruta" class="grupo pa-5">
         <h3>{{ g.titulo }}</h3>
         <code>GET {{ g.ruta }}</code>
-        <ul>
-          <li v-for="v in g.valores" :key="v">{{ v }}</li>
-        </ul>
-      </article>
+        <v-list class="valores pa-0" bg-color="transparent">
+          <v-list-item v-for="v in g.valores" :key="v" :title="v" class="valor" />
+        </v-list>
+      </v-card>
     </div>
   </section>
 </template>
@@ -52,32 +52,27 @@ onMounted(async () => {
   gap: 20px;
 }
 
+.grupo {
+  background: linear-gradient(180deg, rgb(var(--v-theme-surface)), rgb(var(--v-theme-azul-profundo)));
+  border: 1px solid rgb(var(--v-theme-oro-oscuro));
+}
+
 h3 {
   font-size: 1.05rem;
-  color: var(--oro);
+  color: rgb(var(--v-theme-primary));
 }
 
 code {
   display: block;
   margin: 4px 0 14px;
   font-size: 0.8rem;
-  color: var(--azul-hex);
+  color: rgb(var(--v-theme-info));
 }
 
-ul {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-li {
-  padding: 8px 12px;
-  color: var(--texto-fuerte);
-  background: var(--azul-noche);
-  border: 1px solid var(--azul-borde);
-  border-left: 3px solid var(--oro-oscuro);
+.valor {
+  margin-bottom: 8px;
+  background: rgb(var(--v-theme-azul-noche));
+  border: 1px solid rgb(var(--v-theme-azul-borde));
+  border-left: 3px solid rgb(var(--v-theme-oro-oscuro));
 }
 </style>

@@ -22,6 +22,10 @@ const filtroEstado = ref('')
 const roles = ref([])
 const estados = ref([])
 
+// "Todos" usa '' para no cambiar la lógica de filtrado
+const itemsRol = computed(() => [{ title: 'Todos los roles', value: '' }, ...roles.value])
+const itemsEstado = computed(() => [{ title: 'Todos los estados', value: '' }, ...estados.value])
+
 const hayFiltros = computed(() => !!(busqueda.value.trim() || filtroRol.value || filtroEstado.value))
 
 let ultimaPeticion = 0 // evita que una respuesta lenta pise a una más reciente
@@ -119,36 +123,56 @@ async function confirmarEliminar() {
     <h2 class="vista-titulo">Jugadores</h2>
 
     <div class="barra-busqueda">
-      <input
+      <v-text-field
         v-model="busqueda"
-        class="entrada buscador"
         type="search"
         placeholder="Buscar jugador por nickname..."
         aria-label="Buscar jugador por nickname"
+        hide-details
       />
-      <button v-if="puedeEditar" class="btn-agregar" type="button" title="Añadir jugador" @click="abrirFormulario()">
-        <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
-      </button>
+      <v-btn
+        v-if="puedeEditar"
+        icon
+        color="success"
+        variant="flat"
+        width="48"
+        height="48"
+        title="Añadir jugador"
+        aria-label="Añadir jugador"
+        @click="abrirFormulario()"
+      >
+        <svg class="icono icono-grande" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+      </v-btn>
     </div>
 
     <div class="filtros">
-      <select v-model="filtroRol" class="entrada" aria-label="Filtrar por rol">
-        <option value="">Todos los roles</option>
-        <option v-for="r in roles" :key="r" :value="r">{{ r }}</option>
-      </select>
-      <select v-model="filtroEstado" class="entrada" aria-label="Filtrar por estado">
-        <option value="">Todos los estados</option>
-        <option v-for="e in estados" :key="e" :value="e">{{ e }}</option>
-      </select>
+      <v-select
+        v-model="filtroRol"
+        :items="itemsRol"
+        aria-label="Filtrar por rol"
+        density="compact"
+        hide-details
+        class="filtro"
+      />
+      <v-select
+        v-model="filtroEstado"
+        :items="itemsEstado"
+        aria-label="Filtrar por estado"
+        density="compact"
+        hide-details
+        class="filtro"
+      />
       <span v-if="!error && !(cargando && !jugadores.length)" class="contador">
         {{ jugadores.length }} {{ jugadores.length === 1 ? 'jugador' : 'jugadores' }}
       </span>
     </div>
 
-    <p v-if="error" class="mensaje-error">
+    <v-alert v-if="error" type="error">
       {{ error }}
-      <button class="btn-enlace reintentar" type="button" @click="cargar">Reintentar</button>
-    </p>
+      <template #append>
+        <v-btn size="small" variant="outlined" @click="cargar">Reintentar</v-btn>
+      </template>
+    </v-alert>
 
     <p v-else-if="cargando && !jugadores.length" class="aviso">Cargando jugadores...</p>
 
@@ -159,29 +183,39 @@ async function confirmarEliminar() {
     </p>
 
     <div v-else class="rejilla">
-      <article v-for="j in jugadores" :key="j.id" class="jugador">
+      <v-card v-for="j in jugadores" :key="j.id" class="jugador">
         <div v-if="puedeEditar" class="acciones">
-          <button class="btn-icono peligro" type="button" title="Eliminar" :aria-label="`Eliminar a ${j.nickname}`" @click="pedirEliminar(j)">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
+          <v-btn
+            icon
+            variant="text"
+            size="small"
+            class="peligro"
+            title="Eliminar"
+            :aria-label="`Eliminar a ${j.nickname}`"
+            @click="pedirEliminar(j)"
+          >
+            <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" />
             </svg>
-          </button>
-          <button class="btn-icono" type="button" title="Editar" :aria-label="`Editar a ${j.nickname}`" @click="abrirFormulario(j)">
-            <svg viewBox="0 0 24 24" aria-hidden="true">
+          </v-btn>
+          <v-btn icon variant="text" size="small" title="Editar" :aria-label="`Editar a ${j.nickname}`" @click="abrirFormulario(j)">
+            <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M4 20h4L19 9l-4-4L4 16v4z" />
               <path d="M13.5 6.5l4 4" />
             </svg>
-          </button>
+          </v-btn>
         </div>
 
         <h3>{{ j.nickname }}</h3>
         <p class="nombre">{{ j.nombre_real || 'Sin nombre registrado' }}</p>
         <p class="pais">{{ j.pais || 'País no indicado' }}</p>
         <div class="insignias">
-          <span class="insignia">{{ j.rol }}</span>
-          <span class="insignia" :class="j.estado">{{ j.estado }}</span>
+          <v-chip label size="small" variant="outlined" color="primary">{{ j.rol }}</v-chip>
+          <v-chip label size="small" variant="outlined" :color="j.estado === 'activo' ? 'success' : undefined">
+            {{ j.estado }}
+          </v-chip>
         </div>
-      </article>
+      </v-card>
     </div>
 
     <JugadorForm
@@ -211,11 +245,12 @@ async function confirmarEliminar() {
 <style scoped>
 .barra-busqueda {
   display: flex;
+  align-items: center;
   gap: 12px;
   margin-bottom: 12px;
 }
 
-.buscador {
+.barra-busqueda .v-input {
   flex: 1;
   min-width: 0;
 }
@@ -226,6 +261,10 @@ async function confirmarEliminar() {
   align-items: center;
   gap: 12px;
   margin-bottom: 24px;
+}
+
+.filtro {
+  flex: 0 1 220px;
 }
 
 .contador {
@@ -239,10 +278,6 @@ async function confirmarEliminar() {
   text-align: center;
 }
 
-.reintentar {
-  margin-left: 12px;
-}
-
 .rejilla {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
@@ -252,13 +287,13 @@ async function confirmarEliminar() {
 .jugador {
   position: relative;
   padding: 18px 20px;
-  background: linear-gradient(180deg, var(--azul-panel), var(--azul-profundo));
-  border: 1px solid var(--oro-oscuro);
+  background: linear-gradient(180deg, rgb(var(--v-theme-surface)), rgb(var(--v-theme-azul-profundo)));
+  border: 1px solid rgb(var(--v-theme-oro-oscuro));
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .jugador:hover {
-  border-color: var(--oro);
+  border-color: rgb(var(--v-theme-primary));
   box-shadow: 0 0 16px rgba(200, 170, 110, 0.15);
 }
 
@@ -271,16 +306,35 @@ async function confirmarEliminar() {
   gap: 2px;
 }
 
+.icono {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icono-grande {
+  width: 22px;
+  height: 22px;
+  stroke-width: 2.4;
+}
+
+.peligro:hover {
+  color: rgb(var(--v-theme-error));
+}
+
 h3 {
   font-size: 1.25rem;
-  color: var(--oro-claro);
   padding-right: 40px;
   overflow-wrap: anywhere;
 }
 
 .nombre {
   margin: 4px 0 0;
-  color: var(--texto-fuerte);
+  color: rgb(var(--v-theme-on-surface));
   padding-right: 40px;
 }
 

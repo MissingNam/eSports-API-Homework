@@ -331,3 +331,13 @@ select option {
 .alterno a:hover {
   color: var(--oro-claro);
 }
+
+.v-application {
+  font-family: var(--fuente-texto) !important;
+}
+.v-application h1,
+.v-application h2,
+.v-application h3,
+.v-btn {
+  font-family: var(--fuente-titulo);
+}

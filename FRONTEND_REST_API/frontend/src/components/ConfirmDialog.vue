@@ -18,27 +18,23 @@ function cerrar() {
 <template>
   <ModalBase :titulo="titulo" ancho="440px" @cerrar="cerrar">
     <div class="mensaje"><slot /></div>
-    <p v-if="error" class="mensaje-error">{{ error }}</p>
+    <v-alert v-if="error" type="error">{{ error }}</v-alert>
 
     <template #pie>
-      <button class="btn-enlace" type="button" :disabled="cargando" @click="cerrar">Cancelar</button>
-      <button class="btn-peligro" type="button" :disabled="cargando" @click="emit('confirmar')">
+      <v-btn variant="text" :disabled="cargando" @click="cerrar">Cancelar</v-btn>
+      <v-btn color="error" variant="flat" :disabled="cargando" @click="emit('confirmar')">
         {{ cargando ? textoCargando : textoConfirmar }}
-      </button>
+      </v-btn>
     </template>
   </ModalBase>
 </template>
 
 <style scoped>
-.mensaje {
-  color: var(--texto-fuerte);
-}
-
 .mensaje :deep(p) {
   margin: 0 0 8px;
 }
 
 .mensaje :deep(small) {
-  color: var(--texto);
+  opacity: 0.75;
 }
 </style>

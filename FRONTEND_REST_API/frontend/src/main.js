@@ -4,6 +4,7 @@ import '@fontsource/cinzel/600.css'
 import '@fontsource/cinzel/700.css'
 import '@fontsource/lato/400.css'
 import '@fontsource/lato/700.css'
+import vuetify from './plugins/vuetify.js'
 import './assets/theme.css'
 
 import App from './App.vue'
@@ -11,9 +12,11 @@ import router from './router'
 import { useAuthStore } from './stores/auth'
 import { setUnauthorizedHandler } from './api/http'
 
+
 const app = createApp(App)
 app.use(createPinia()) // Pinia primero: el guardia del router usa el store
 app.use(router)
+app.use(vuetify)
 
 // Si en cualquier petición el servidor responde 401 (sesión expirada), volvemos al login
 setUnauthorizedHandler(() => {

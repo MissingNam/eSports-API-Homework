@@ -54,8 +54,9 @@ function alternar() {
   if (abierto.value && jugadores.value === null) cargarJugadores()
 }
 
-async function cambiarRol(j, evento) {
-  const nuevo = evento.target.value
+// v-select recibe el valor directamente. Como su model-value viene del jugador (no de un v-model local),
+// si el servidor rechaza el cambio el selector vuelve solo a su valor anterior.
+async function cambiarRol(j, nuevo) {
   if (nuevo === j.rol_en_roster) return
 
   errorAccion.value = ''
@@ -64,7 +65,6 @@ async function cambiarRol(j, evento) {
     await rostersApi.cambiarRol(props.roster.id, j.id, nuevo)
     await cargarJugadores()
   } catch (e) {
-    evento.target.value = j.rol_en_roster // el servidor lo rechazó: el combobox vuelve a su valor
     errorAccion.value = e.message
   } finally {
     ocupado.value = null
@@ -93,7 +93,7 @@ function alAsignar() {
 </script>
 
 <template>
-  <article class="roster" :class="{ abierto }">
+  <v-card class="roster" :class="{ abierto }">
     <div class="cabecera">
       <button
         class="alternar"
@@ -107,36 +107,53 @@ function alAsignar() {
           <strong>{{ roster.nombre }}</strong>
           <small>{{ roster.juego }}</small>
         </span>
-        <span class="insignia">{{ roster.tipo }}</span>
-        <span class="insignia">Temporada {{ roster.temporada }}</span>
+        <v-chip label size="small" variant="outlined" color="primary">{{ roster.tipo }}</v-chip>
+        <v-chip label size="small" variant="outlined" color="primary">Temporada {{ roster.temporada }}</v-chip>
         <span class="cantidad">{{ cantidad }} {{ cantidad === 1 ? 'jugador' : 'jugadores' }}</span>
       </button>
 
       <div v-if="editable" class="acciones">
-        <button class="btn-icono peligro" type="button" title="Eliminar roster" :aria-label="`Eliminar el roster ${roster.nombre}`" @click="emit('eliminar', roster)">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
+        <v-btn
+          icon
+          variant="text"
+          size="small"
+          class="peligro"
+          title="Eliminar roster"
+          :aria-label="`Eliminar el roster ${roster.nombre}`"
+          @click="emit('eliminar', roster)"
+        >
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" />
           </svg>
-        </button>
-        <button class="btn-icono" type="button" title="Editar roster" :aria-label="`Editar el roster ${roster.nombre}`" @click="emit('editar', roster)">
-          <svg viewBox="0 0 24 24" aria-hidden="true">
+        </v-btn>
+        <v-btn
+          icon
+          variant="text"
+          size="small"
+          title="Editar roster"
+          :aria-label="`Editar el roster ${roster.nombre}`"
+          @click="emit('editar', roster)"
+        >
+          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
             <path d="M4 20h4L19 9l-4-4L4 16v4z" />
             <path d="M13.5 6.5l4 4" />
           </svg>
-        </button>
+        </v-btn>
       </div>
     </div>
 
     <div v-if="abierto" :id="`roster-${roster.id}`" class="cuerpo">
       <p v-if="cargando && jugadores === null" class="aviso">Cargando jugadores...</p>
 
-      <p v-else-if="error" class="mensaje-error">
+      <v-alert v-else-if="error" type="error">
         {{ error }}
-        <button class="btn-enlace reintentar" type="button" @click="cargarJugadores">Reintentar</button>
-      </p>
+        <template #append>
+          <v-btn size="small" variant="outlined" @click="cargarJugadores">Reintentar</v-btn>
+        </template>
+      </v-alert>
 
       <template v-else>
-        <p v-if="errorAccion" class="mensaje-error">{{ errorAccion }}</p>
+        <v-alert v-if="errorAccion" type="error">{{ errorAccion }}</v-alert>
 
         <p class="resumen">
           Titulares: {{ titulares }}/{{ MAX_TITULARES }} · Suplentes: {{ suplentes }}
@@ -145,39 +162,55 @@ function alAsignar() {
         <p v-if="!ordenados.length" class="aviso">Este roster aún no tiene jugadores.</p>
 
         <div v-else class="jugadores">
-          <div v-for="j in ordenados" :key="j.id" class="miembro">
-            <button
+          <v-sheet v-for="j in ordenados" :key="j.id" class="miembro" color="azul-noche" border>
+            <v-btn
               v-if="editable"
-              class="btn-icono peligro quitar"
-              type="button"
+              icon
+              variant="text"
+              size="x-small"
+              class="quitar peligro"
               title="Quitar del roster"
               :aria-label="`Quitar a ${j.nickname} del roster`"
               :disabled="ocupado === j.id"
               @click="quitar(j)"
             >
-              <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" /></svg>
-            </button>
+              <svg class="icono icono-chico" viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 6l12 12M18 6L6 18" />
+              </svg>
+            </v-btn>
 
             <strong class="nick">{{ j.nickname }}</strong>
-            <span class="insignia">{{ j.rol }}</span>
+            <v-chip label size="small" variant="outlined" color="primary">{{ j.rol }}</v-chip>
 
-            <select
+            <v-select
               v-if="editable"
-              class="entrada rol-roster"
-              :value="j.rol_en_roster"
+              :model-value="j.rol_en_roster"
+              :items="ROLES_EN_ROSTER"
               :disabled="ocupado === j.id"
               :aria-label="`Rol de ${j.nickname} en el roster`"
-              @change="cambiarRol(j, $event)"
-            >
-              <option v-for="r in ROLES_EN_ROSTER" :key="r" :value="r">{{ r }}</option>
-            </select>
-            <span v-else class="insignia">{{ j.rol_en_roster }}</span>
-          </div>
+              density="compact"
+              hide-details
+              class="rol-roster"
+              @update:model-value="(nuevo) => cambiarRol(j, nuevo)"
+            />
+            <v-chip v-else label size="small" variant="outlined" color="primary">
+              {{ j.rol_en_roster }}
+            </v-chip>
+          </v-sheet>
         </div>
 
-        <button v-if="editable" class="agregar-jugador" type="button" title="Añadir jugador al roster" aria-label="Añadir jugador al roster" @click="asignarAbierto = true">
-          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
-        </button>
+        <v-btn
+          v-if="editable"
+          color="success"
+          variant="flat"
+          block
+          height="44"
+          title="Añadir jugador al roster"
+          aria-label="Añadir jugador al roster"
+          @click="asignarAbierto = true"
+        >
+          <svg class="icono icono-grande" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+        </v-btn>
       </template>
     </div>
 
@@ -188,19 +221,19 @@ function alAsignar() {
       @asignado="alAsignar"
       @cerrar="asignarAbierto = false"
     />
-  </article>
+  </v-card>
 </template>
 
 <style scoped>
 .roster {
-  background: linear-gradient(180deg, var(--azul-panel), var(--azul-profundo));
-  border: 1px solid var(--oro-oscuro);
+  background: linear-gradient(180deg, rgb(var(--v-theme-surface)), rgb(var(--v-theme-azul-profundo)));
+  border: 1px solid rgb(var(--v-theme-oro-oscuro));
   transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 .roster:hover,
 .roster.abierto {
-  border-color: var(--oro);
+  border-color: rgb(var(--v-theme-primary));
 }
 
 .roster.abierto {
@@ -233,7 +266,7 @@ function alAsignar() {
   width: 20px;
   height: 20px;
   fill: none;
-  stroke: var(--oro);
+  stroke: rgb(var(--v-theme-primary));
   stroke-width: 2.2;
   stroke-linecap: round;
   stroke-linejoin: round;
@@ -254,12 +287,8 @@ function alAsignar() {
   font-family: var(--fuente-titulo);
   font-size: 1.2rem;
   letter-spacing: 0.06em;
-  color: var(--oro-claro);
+  color: rgb(var(--v-theme-secondary));
   overflow-wrap: anywhere;
-}
-
-.titulo small {
-  color: var(--texto);
 }
 
 .cantidad {
@@ -275,13 +304,39 @@ function alAsignar() {
   padding: 8px 8px 0 0;
 }
 
+/* ---------- Iconos SVG dentro de v-btn ---------- */
+.icono {
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.icono-chico {
+  width: 15px;
+  height: 15px;
+}
+
+.icono-grande {
+  width: 22px;
+  height: 22px;
+  stroke-width: 2.4;
+}
+
+.peligro:hover {
+  color: rgb(var(--v-theme-error));
+}
+
 /* ---------- Cuerpo desplegado ---------- */
 .cuerpo {
   display: flex;
   flex-direction: column;
   gap: 14px;
   padding: 16px 20px 20px;
-  border-top: 1px solid var(--oro-oscuro);
+  border-top: 1px solid rgb(var(--v-theme-oro-oscuro));
 }
 
 .aviso {
@@ -295,11 +350,7 @@ function alAsignar() {
   font-size: 0.85rem;
   letter-spacing: 0.08em;
   text-transform: uppercase;
-  color: var(--oro);
-}
-
-.reintentar {
-  margin-left: 12px;
+  color: rgb(var(--v-theme-primary));
 }
 
 .jugadores {
@@ -315,62 +366,23 @@ function alAsignar() {
   align-items: flex-start;
   gap: 8px;
   padding: 14px 14px 14px 16px;
-  background: var(--azul-noche);
-  border: 1px solid var(--azul-borde);
-  border-left: 3px solid var(--oro-oscuro);
+  border-color: rgb(var(--v-theme-azul-borde));
+  border-left: 3px solid rgb(var(--v-theme-oro-oscuro));
 }
 
 .quitar {
   position: absolute;
   top: 4px;
   right: 4px;
-  width: 26px;
-  height: 26px;
-}
-
-.quitar svg {
-  width: 15px;
-  height: 15px;
 }
 
 .nick {
   padding-right: 24px;
-  color: var(--texto-fuerte);
   font-size: 1.05rem;
   overflow-wrap: anywhere;
 }
 
 .rol-roster {
   width: 100%;
-  padding: 6px 8px;
-  font-size: 0.9rem;
-}
-
-/* Rectángulo verde con "+" al final del desplegable */
-.agregar-jugador {
-  display: grid;
-  place-items: center;
-  width: 100%;
-  height: 44px;
-  padding: 0;
-  color: #d6ffe9;
-  background: linear-gradient(180deg, #0f7a4d, #095c3a);
-  border: 1px solid var(--exito);
-  cursor: pointer;
-  transition: box-shadow 0.15s, filter 0.15s;
-}
-
-.agregar-jugador svg {
-  width: 22px;
-  height: 22px;
-  fill: none;
-  stroke: currentColor;
-  stroke-width: 2.4;
-  stroke-linecap: round;
-}
-
-.agregar-jugador:hover {
-  filter: brightness(1.2);
-  box-shadow: 0 0 14px rgba(10, 207, 131, 0.5);
 }
 </style>

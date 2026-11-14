@@ -3,7 +3,6 @@ import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '../stores/auth'
 
-
 const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:3000/api/v1'
 const googleUrl = `${API_URL}/auth/google/login`
 
@@ -16,7 +15,13 @@ const password = ref('')
 const error = ref('')
 const cargando = ref(false)
 
-async function enviar() {
+const requerido = (v) => !!v?.toString().trim() || 'Campo requerido'
+
+// v-form emite un "submit" que se puede await para conocer el resultado de las reglas
+async function enviar(evento) {
+  const { valid } = await evento
+  if (!valid) return
+
   error.value = ''
   cargando.value = true
   try {
@@ -31,90 +36,86 @@ async function enviar() {
 </script>
 
 <template>
-  <main class="login">
-    <form class="tarjeta" @submit.prevent="enviar">
+  <v-main class="login d-flex align-center justify-center">
+    <v-card class="tarjeta pa-9 text-center" max-width="400" width="100%">
       <span class="esquina arriba-izq"></span>
       <span class="esquina arriba-der"></span>
       <span class="esquina abajo-izq"></span>
       <span class="esquina abajo-der"></span>
 
-      <h1>Panel de Administración</h1>
-      <p class="subtitulo">Inicia sesión para continuar</p>
+      <h1 class="text-h5 text-primary">Panel de Administración</h1>
+      <p class="text-body-2 mt-1 mb-4">Inicia sesión para continuar</p>
 
-      <p v-if="route.query.expirada" class="mensaje-aviso">
+      <v-alert v-if="route.query.expirada" type="warning" class="mb-4">
         Tu sesión expiró. Inicia sesión de nuevo.
-      </p>
-      <p v-if="route.query.error === 'google'" class="mensaje-error">
+      </v-alert>
+      <v-alert v-if="route.query.error === 'google'" type="error" class="mb-4">
         No se pudo iniciar sesión con Google. Inténtalo de nuevo.
-      </p>
-      <p v-if="error" class="mensaje-error">{{ error }}</p>
+      </v-alert>
+      <v-alert v-if="error" type="error" class="mb-4">{{ error }}</v-alert>
 
-      <div class="campo">
-                <label for="username">Usuario o correo</label>
-        <input id="username" v-model="username" type="text" autocomplete="username" required autofocus />
-      </div>
+      <v-form @submit.prevent="enviar">
+        <v-text-field
+          v-model="username"
+          label="Usuario o correo"
+          type="text"
+          autocomplete="username"
+          autofocus
+          :rules="[requerido]"
+        />
+        <v-text-field
+          v-model="password"
+          label="Contraseña"
+          type="password"
+          autocomplete="current-password"
+          :rules="[requerido]"
+        />
 
-      <div class="campo">
-        <label for="password">Contraseña</label>
-        <input id="password" v-model="password" type="password" autocomplete="current-password" required />
-      </div>
+        <v-btn type="submit" color="primary" variant="flat" size="large" block :loading="cargando">
+          {{ cargando ? 'Entrando...' : 'Iniciar sesión' }}
+        </v-btn>
+      </v-form>
 
-      <button class="btn-oro" type="submit" :disabled="cargando">
-        {{ cargando ? 'Entrando...' : 'Iniciar sesión' }}
-      </button>
-      <div class="separador"><span>o</span></div>
-      <a :href="googleUrl" class="btn-google">
-        <img src="/google.svg" alt="" width="20" height="20" />
+      <div class="separador my-4"><span>o</span></div>
+
+      <v-btn :href="googleUrl" variant="outlined" size="large" block class="btn-google">
+        <template #prepend>
+          <img src="/google.svg" alt="" width="20" height="20" />
+        </template>
         Iniciar sesión con Google
-      </a>
-      <p class="alterno">
+      </v-btn>
+
+      <p class="text-body-2 mt-4">
         ¿No tienes cuenta? <RouterLink :to="{ name: 'registro' }">Crear cuenta</RouterLink>
       </p>
-    </form>
-  </main>
+    </v-card>
+  </v-main>
 </template>
 
 <style scoped>
 .login {
-  min-height: 100%;
-  display: grid;
-  place-items: center;
-  padding: 24px;
   background:
     radial-gradient(ellipse at 50% 30%, rgba(10, 200, 185, 0.08), transparent 60%),
     radial-gradient(ellipse at 50% 100%, rgba(200, 170, 110, 0.1), transparent 55%),
-    var(--azul-noche);
+    rgb(var(--v-theme-azul-noche));
 }
 
 .tarjeta {
   position: relative;
-  width: 100%;
-  max-width: 400px;
-  display: flex;
-  flex-direction: column;
-  gap: 18px;
-  padding: 40px 36px;
-  text-align: center;
-  background: linear-gradient(180deg, var(--azul-panel), var(--azul-profundo));
-  border: 1px solid var(--oro-oscuro);
-  box-shadow: 0 0 0 4px var(--azul-noche), 0 0 0 5px var(--oro-oscuro), 0 20px 60px rgba(0, 0, 0, 0.7);
-}
-
-h1 {
-  font-size: 1.5rem;
-  color: var(--oro);
-}
-
-.subtitulo {
-  margin: -8px 0 4px;
-  font-size: 0.9rem;
+  overflow: visible;
+  background: linear-gradient(180deg, rgb(var(--v-theme-surface)), rgb(var(--v-theme-azul-profundo)));
+  border: 1px solid rgb(var(--v-theme-oro-oscuro));
+  box-shadow:
+    0 0 0 4px rgb(var(--v-theme-azul-noche)),
+    0 0 0 5px rgb(var(--v-theme-oro-oscuro)),
+    0 20px 60px rgba(0, 0, 0, 0.7);
 }
 
 .esquina {
   position: absolute;
   width: 14px;
   height: 14px;
-  border: 2px solid var(--oro);
+  border: 2px solid rgb(var(--v-theme-primary));
 }
 .arriba-izq { top: -2px; left: -2px; border-right: 0; border-bottom: 0; }
 .arriba-der { top: -2px; right: -2px; border-left: 0; border-bottom: 0; }
@@ -129,32 +130,20 @@ h1 {
   letter-spacing: 0.14em;
   text-transform: uppercase;
 }
-
 .separador::before,
 .separador::after {
   content: '';
   flex: 1;
   height: 1px;
-  background: var(--oro-oscuro);
+  background: rgb(var(--v-theme-oro-oscuro));
 }
 
 .btn-google {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 10px;
-  padding: 10px 16px;
   color: #e3e3e3;
   background: #131314;
-  border: 1px solid #8e918f;
-  font-family: var(--fuente-texto);
+  border-color: #8e918f;
+  text-transform: none;
+  letter-spacing: normal;
   font-weight: 700;
-  text-decoration: none;
-  transition: border-color 0.15s, box-shadow 0.15s;
-}
-
-.btn-google:hover {
-  border-color: var(--oro-claro);
-  box-shadow: 0 0 14px rgba(200, 170, 110, 0.3);
 }
 </style>

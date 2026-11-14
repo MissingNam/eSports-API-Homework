@@ -1,5 +1,5 @@
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '../stores/auth'
 import { salud } from '../api/auxiliares'
 
@@ -7,6 +7,11 @@ const auth = useAuthStore()
 
 const estado = ref('cargando') // 'cargando' | 'ok' | 'error'
 const detalle = ref('')
+
+// color del indicador según el estado (nombres del tema de Vuetify)
+const colorPunto = computed(
+  () => ({ cargando: 'oro-oscuro', ok: 'success', error: 'error' })[estado.value]
+)
 
 async function verificar() {
   estado.value = 'cargando'
@@ -32,18 +37,18 @@ onMounted(verificar)
       Usa las pestañas de la izquierda para empezar.
     </p>
 
-    <div class="tarjeta-panel estado">
-      <span class="punto" :class="estado"></span>
+    <v-card class="estado pa-5">
+      <span class="punto" :class="`bg-${colorPunto}`" :style="{ '--brillo': `var(--v-theme-${colorPunto})` }"></span>
       <div class="texto">
         <strong v-if="estado === 'cargando'">Comprobando el servidor...</strong>
         <strong v-else-if="estado === 'ok'">Servidor funcionando: OK</strong>
         <strong v-else>El servidor no responde</strong>
-        <span v-if="detalle">{{ detalle }}</span>
+        <span v-if="detalle" class="text-body-2">{{ detalle }}</span>
       </div>
-      <button class="btn-enlace" :disabled="estado === 'cargando'" @click="verificar">
+      <v-btn variant="outlined" color="primary" size="small" :disabled="estado === 'cargando'" @click="verificar">
         Verificar
-      </button>
-    </div>
+      </v-btn>
+    </v-card>
   </section>
 </template>
 
@@ -58,6 +63,8 @@ onMounted(verificar)
   align-items: center;
   gap: 16px;
   max-width: 560px;
+  background: linear-gradient(180deg, rgb(var(--v-theme-surface)), rgb(var(--v-theme-azul-profundo)));
+  border: 1px solid rgb(var(--v-theme-oro-oscuro));
 }
 
 .texto {
@@ -67,13 +74,8 @@ onMounted(verificar)
 }
 
 .texto strong {
-  color: var(--texto-fuerte);
   font-family: var(--fuente-titulo);
   letter-spacing: 0.06em;
-}
-
-.texto span {
-  font-size: 0.9rem;
 }
 
 .punto {
@@ -83,22 +85,9 @@ onMounted(verificar)
   flex-shrink: 0;
 }
 
-.punto.cargando {
-  background: var(--oro-oscuro);
-}
-
-.punto.ok {
-  background: var(--exito);
-  box-shadow: 0 0 10px var(--exito);
-}
-
-.punto.error {
-  background: var(--error);
-  box-shadow: 0 0 10px var(--error);
-}
-
-.btn-enlace:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+/* brillo solo para ok / error */
+.punto.bg-success,
+.punto.bg-error {
+  box-shadow: 0 0 10px rgb(var(--brillo));
 }
 </style>

@@ -14,7 +14,7 @@ const esEdicion = computed(() => props.roster !== null)
 const form = reactive({
   nombre: props.roster?.nombre ?? '',
   juego: props.roster?.juego ?? '',
-  tipo: props.roster?.tipo ?? '',
+  tipo: props.roster?.tipo ?? null,
   temporada: props.roster?.temporada ?? String(new Date().getFullYear())
 })
 
@@ -22,7 +22,13 @@ const cargando = ref(false)
 const error = ref('')
 const detalles = ref([])
 
-async function guardar() {
+const requerido = (v) => !!v?.toString().trim() || 'Campo obligatorio'
+
+// v-form emite un "submit" que se puede await para conocer el resultado de las reglas
+async function guardar(evento) {
+  const { valid } = await evento
+  if (!valid) return
+
   error.value = ''
   detalles.value = []
 
@@ -33,15 +39,6 @@ async function guardar() {
   }
   // Si se deja vacío no se envía y el servidor conserva / usa League of Legends
   if (form.juego.trim()) datos.juego = form.juego.trim()
-
-  if (!datos.nombre) {
-    error.value = 'El nombre es obligatorio.'
-    return
-  }
-  if (!datos.temporada) {
-    error.value = 'La temporada es obligatoria.'
-    return
-  }
 
   cargando.value = true
   try {
@@ -64,63 +61,62 @@ function cerrar() {
 
 <template>
   <ModalBase :titulo="esEdicion ? 'Editar roster' : 'Nuevo roster'" @cerrar="cerrar">
-    <form id="form-roster" class="formulario" @submit.prevent="guardar">
-      <div v-if="error" class="mensaje-error">
+    <v-form id="form-roster" class="d-flex flex-column ga-4" @submit.prevent="guardar">
+      <v-alert v-if="error" type="error">
         {{ error }}
-        <ul v-if="detalles.length">
+        <ul v-if="detalles.length" class="detalles">
           <li v-for="d in detalles" :key="d">{{ d }}</li>
         </ul>
-      </div>
+      </v-alert>
 
-      <div class="campo">
-        <label for="r-nombre">Nombre *</label>
-        <input id="r-nombre" v-model="form.nombre" type="text" maxlength="100" required autofocus />
-      </div>
+      <v-text-field
+        v-model="form.nombre"
+        label="Nombre *"
+        maxlength="100"
+        autofocus
+        :rules="[requerido]"
+      />
 
-      <div class="campo">
-        <label for="r-juego">Juego</label>
-        <input id="r-juego" v-model="form.juego" type="text" maxlength="100" placeholder="League of Legends (por defecto)" />
-      </div>
+      <v-text-field
+        v-model="form.juego"
+        label="Juego"
+        maxlength="100"
+        placeholder="League of Legends (por defecto)"
+        persistent-placeholder
+      />
 
-      <div class="fila">
-        <div class="campo">
-          <label for="r-tipo">Tipo *</label>
-          <select id="r-tipo" v-model="form.tipo" required>
-            <option value="" disabled>Selecciona un tipo</option>
-            <option v-for="t in tipos" :key="t" :value="t">{{ t }}</option>
-          </select>
-        </div>
-
-        <div class="campo">
-          <label for="r-temporada">Temporada *</label>
-          <input id="r-temporada" v-model="form.temporada" type="text" maxlength="10" required />
-        </div>
-      </div>
-    </form>
+      <v-row dense>
+        <v-col cols="12" sm="6">
+          <v-select
+            v-model="form.tipo"
+            :items="tipos"
+            label="Tipo *"
+            placeholder="Selecciona un tipo"
+            :rules="[(v) => !!v || 'Selecciona un tipo']"
+          />
+        </v-col>
+        <v-col cols="12" sm="6">
+          <v-text-field
+            v-model="form.temporada"
+            label="Temporada *"
+            maxlength="10"
+            :rules="[requerido]"
+          />
+        </v-col>
+      </v-row>
+    </v-form>
 
     <template #pie>
-      <button class="btn-enlace" type="button" :disabled="cargando" @click="cerrar">Cancelar</button>
-      <button class="btn-oro" type="submit" form="form-roster" :disabled="cargando">
+      <v-btn variant="outlined" color="primary" :disabled="cargando" @click="cerrar">Cancelar</v-btn>
+      <v-btn type="submit" form="form-roster" color="primary" variant="flat" :loading="cargando">
         {{ cargando ? 'Guardando...' : 'Guardar' }}
-      </button>
+      </v-btn>
     </template>
   </ModalBase>
 </template>
 
 <style scoped>
-.formulario {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.fila {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-}
-
-.mensaje-error ul {
+.detalles {
   margin: 6px 0 0;
   padding-left: 18px;
 }
