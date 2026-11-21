@@ -121,50 +121,58 @@ async function confirmarEliminar() {
   <section>
     <h2 class="vista-titulo">Roster</h2>
 
-    <div class="barra-busqueda">
-      <v-text-field
-        v-model="busqueda"
-        type="search"
-        placeholder="Buscar roster por nombre..."
-        aria-label="Buscar roster por nombre"
-        hide-details
-      />
-      <v-btn
-        v-if="puedeEditar"
-        icon
-        color="success"
-        variant="flat"
-        width="48"
-        height="48"
-        title="Añadir roster"
-        aria-label="Añadir roster"
-        @click="abrirFormulario()"
-      >
-        <svg class="icono-mas" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
-      </v-btn>
-    </div>
+    <v-row dense align="center" class="mb-1">
+      <v-col>
+        <v-text-field
+          v-model="busqueda"
+          type="search"
+          placeholder="Buscar roster por nombre..."
+          aria-label="Buscar roster por nombre"
+          hide-details
+        />
+      </v-col>
+      <v-col v-if="puedeEditar" cols="auto">
+        <v-btn
+          v-if="puedeEditar"
+          icon
+          color="success"
+          variant="flat"
+          width="48"
+          height="48"
+          title="Añadir roster"
+          aria-label="Añadir roster"
+          @click="abrirFormulario()"
+        >
+          <svg class="icono-mas" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+        </v-btn>
+      </v-col>
+    </v-row>
 
-    <div class="filtros">
-      <v-select
-        v-model="filtroTipo"
-        :items="itemsTipo"
-        aria-label="Filtrar por tipo"
-        density="compact"
-        hide-details
-        class="filtro"
-      />
-      <v-select
-        v-model="filtroTemporada"
-        :items="itemsTemporada"
-        aria-label="Filtrar por temporada"
-        density="compact"
-        hide-details
-        class="filtro"
-      />
-      <span v-if="!error && !(cargando && !rosters.length)" class="contador">
+    <v-row dense align="center" class="mb-4">
+      <v-col cols="12" sm="6" md="4" lg="3">
+        <v-select
+            v-model="filtroTipo"
+            :items="itemsTipo"
+            aria-label="Filtrar por tipo"
+            density="compact"
+            hide-details
+        />
+      </v-col>
+      <v-col cols="12" sm="6" md="4" lg="3">
+        <v-select
+            v-model="filtroTemporada"
+            :items="itemsTemporada"
+            aria-label="Filtrar por temporada"
+            density="compact"
+            hide-details
+        />
+      </v-col>
+      <v-col cols="12" sm class="text-sm-end">
+        <span v-if="!error && !(cargando && !rosters.length)" class="contador">
         {{ visibles.length }} {{ visibles.length === 1 ? 'roster' : 'rosters' }}
       </span>
-    </div>
+      </v-col>
+    </v-row>
 
     <v-alert v-if="error" type="error">
       {{ error }}
@@ -216,18 +224,6 @@ async function confirmarEliminar() {
 </template>
 
 <style scoped>
-.barra-busqueda {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.barra-busqueda .v-input {
-  flex: 1;
-  min-width: 0;
-}
-
 .icono-mas {
   width: 22px;
   height: 22px;
@@ -237,20 +233,7 @@ async function confirmarEliminar() {
   stroke-linecap: round;
 }
 
-.filtros {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-.filtro {
-  flex: 0 1 220px;
-}
-
 .contador {
-  margin-left: auto;
   font-size: 0.85rem;
   letter-spacing: 0.06em;
 }
