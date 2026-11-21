@@ -122,50 +122,58 @@ async function confirmarEliminar() {
   <section>
     <h2 class="vista-titulo">Jugadores</h2>
 
-    <div class="barra-busqueda">
-      <v-text-field
-        v-model="busqueda"
-        type="search"
-        placeholder="Buscar jugador por nickname..."
-        aria-label="Buscar jugador por nickname"
-        hide-details
-      />
-      <v-btn
-        v-if="puedeEditar"
-        icon
-        color="success"
-        variant="flat"
-        width="48"
-        height="48"
-        title="Añadir jugador"
-        aria-label="Añadir jugador"
-        @click="abrirFormulario()"
-      >
-        <svg class="icono icono-grande" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
-      </v-btn>
-    </div>
+    <v-row dense align="center" class="mb-1">
+      <v-col>
+        <v-text-field
+          v-model="busqueda"
+          type="search"
+          placeholder="Buscar jugador por nickname..."
+          aria-label="Buscar jugador por nickname"
+          hide-details
+        />
+      </v-col>
+      <v-col v-if="puedeEditar" cols="auto">
+        <v-btn
+          v-if="puedeEditar"
+          icon
+          color="success"
+          variant="flat"
+          width="48"
+          height="48"
+          title="Añadir jugador"
+          aria-label="Añadir jugador"
+          @click="abrirFormulario()"
+        >
+          <svg class="icono icono-grande" viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" /></svg>
+        </v-btn>
+      </v-col>
+    </v-row>
 
-    <div class="filtros">
-      <v-select
-        v-model="filtroRol"
-        :items="itemsRol"
-        aria-label="Filtrar por rol"
-        density="compact"
-        hide-details
-        class="filtro"
-      />
-      <v-select
-        v-model="filtroEstado"
-        :items="itemsEstado"
-        aria-label="Filtrar por estado"
-        density="compact"
-        hide-details
-        class="filtro"
-      />
-      <span v-if="!error && !(cargando && !jugadores.length)" class="contador">
+    <v-row dense align="center" class="mb-4">
+      <v-col cols="12" sm="6" md="4" lg="3">
+        <v-select
+            v-model="filtroRol"
+            :items="itemsRol"
+            aria-label="Filtrar por rol"
+            density="compact"
+            hide-details
+        />
+      </v-col>
+      <v-col cols="12" sm="6" md="4" lg="3">
+        <v-select
+            v-model="filtroEstado"
+            :items="itemsEstado"
+            aria-label="Filtrar por estado"
+            density="compact"
+            hide-details
+        />
+      </v-col>
+      <v-col cols="12" sm class="text-sm-end">
+        <span v-if="!error && !(cargando && !jugadores.length)" class="contador">
         {{ jugadores.length }} {{ jugadores.length === 1 ? 'jugador' : 'jugadores' }}
       </span>
-    </div>
+      </v-col>
+    </v-row>
 
     <v-alert v-if="error" type="error">
       {{ error }}
@@ -182,8 +190,9 @@ async function confirmarEliminar() {
         : 'Aún no hay jugadores registrados. Usa el botón + para añadir el primero.' }}
     </p>
 
-    <div v-else class="rejilla">
-      <v-card v-for="j in jugadores" :key="j.id" class="jugador">
+    <v-row v-else>
+      <v-col v-for="j in jugadores" :key="j.id" cols="12" sm="6" md="6" lg="4" xl="3">
+      <v-card class="jugador h-100">
         <div v-if="puedeEditar" class="acciones">
           <v-btn
             icon
@@ -216,7 +225,8 @@ async function confirmarEliminar() {
           </v-chip>
         </div>
       </v-card>
-    </div>
+      </v-col>
+    </v-row>
 
     <JugadorForm
       v-if="formularioAbierto"
@@ -243,32 +253,7 @@ async function confirmarEliminar() {
 </template>
 
 <style scoped>
-.barra-busqueda {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.barra-busqueda .v-input {
-  flex: 1;
-  min-width: 0;
-}
-
-.filtros {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 24px;
-}
-
-.filtro {
-  flex: 0 1 220px;
-}
-
 .contador {
-  margin-left: auto;
   font-size: 0.85rem;
   letter-spacing: 0.06em;
 }
@@ -276,12 +261,6 @@ async function confirmarEliminar() {
 .aviso {
   padding: 32px 0;
   text-align: center;
-}
-
-.rejilla {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
-  gap: 20px;
 }
 
 .jugador {

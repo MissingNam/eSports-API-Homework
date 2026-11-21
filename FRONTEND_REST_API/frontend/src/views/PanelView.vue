@@ -1,15 +1,10 @@
 <script setup>
 import { computed } from 'vue'
 import { useRouter } from 'vue-router'
-import { useDisplay } from 'vuetify'
 import { useAuthStore } from '../stores/auth'
 
 const auth = useAuthStore()
 const router = useRouter()
-
-// Mismo punto de corte que tenías (760px): por debajo, las pestañas pasan arriba
-const { width } = useDisplay()
-const angosto = computed(() => width.value < 760)
 
 async function salir() {
   await auth.cerrarSesion()
@@ -48,79 +43,69 @@ const enlaces = computed(() =>
 </script>
 
 <template>
+  <!-- Barra superior: 3 columnas del grid (botón | título | usuario) -->
   <v-app-bar flat color="azul-noche" class="barra-superior">
-    <div class="barra">
-      <v-btn variant="outlined" color="primary" size="small" @click="salir">Cerrar sesión</v-btn>
-      <RouterLink :to="{ name: auth.esAdmin ? 'inicio' : 'jugadores' }" class="marca">
-        {{ auth.esAdmin ? 'Panel de Administración' : 'Panel de Visualización' }}
-      </RouterLink>
-      <span class="usuario">{{ auth.nombreVisible }}</span>
-    </div>
-
-    <!-- Pantallas angostas: pestañas arriba, bajo la barra -->
-    <template v-if="angosto" #extension>
-      <v-tabs grow color="primary" class="tabs-superiores">
-        <v-tab v-for="e in enlaces" :key="e.ruta" :to="{ name: e.ruta }" exact>
-          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
-            <path v-for="d in e.icono" :key="d" :d="d" />
-          </svg>
-          <span class="ml-2">{{ e.nombre }}</span>
-        </v-tab>
-      </v-tabs>
-    </template>
+    <v-container fluid class="py-0">
+      <v-row align="center" no-gutters>
+        <v-col cols="4" sm="3">
+          <v-btn variant="outlined" color="primary" size="small" @click="salir">Cerrar sesión</v-btn>
+        </v-col>
+        <v-col cols="4" sm="6" class="text-center">
+          <RouterLink :to="{ name: auth.esAdmin ? 'inicio' : 'jugadores' }" class="marca text-body-2">
+            {{ auth.esAdmin ? 'Panel de Administración' : 'Panel de Visualización' }}
+          </RouterLink>
+        </v-col>
+        <v-col cols="4" sm="3" class="text-end">
+          <span class="usuario text-body-2">{{ auth.nombreVisible }}</span>
+        </v-col>
+      </v-row>
+    </v-container>
   </v-app-bar>
 
-  <!-- Pantallas anchas: menú lateral fijo -->
-  <v-navigation-drawer v-if="!angosto" permanent :width="220" color="azul-noche" class="menu-lateral">
-    <v-list nav class="py-5">
-      <v-list-item
-        v-for="e in enlaces"
-        :key="e.ruta"
-        :to="{ name: e.ruta }"
-        exact
-        color="primary"
-        class="tab"
-      >
-        <template #prepend>
-          <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
-            <path v-for="d in e.icono" :key="d" :d="d" />
-          </svg>
-        </template>
-        <v-list-item-title>{{ e.nombre }}</v-list-item-title>
-      </v-list-item>
-    </v-list>
-  </v-navigation-drawer>
+  <v-main class="vista-contenedor d-flex">
+    <v-container fluid class="pa-0 d-flex flex-column">
+      <v-row no-gutters class="flex-grow-1 align-content-start align-content-md-stretch">
+        <!-- Menú: arriba (12 columnas) en pantallas chicas; columna lateral desde "md" -->
+        <v-col cols="12" md="3" class="menu">
+          <nav aria-label="Secciones">
+            <v-row no-gutters>
+              <v-col v-for="e in enlaces" :key="e.ruta" cols="6" sm="3" md="12">
+                <v-btn
+                  :to="{ name: e.ruta }"
+                  exact
+                  variant="text"
+                  block
+                  height="52"
+                  class="tab justify-start"
+                >
+                  <template #prepend>
+                    <svg class="icono" viewBox="0 0 24 24" aria-hidden="true">
+                      <path v-for="d in e.icono" :key="d" :d="d" />
+                    </svg>
+                  </template>
+                  {{ e.nombre }}
+                </v-btn>
+              </v-col>
+            </v-row>
+          </nav>
+        </v-col>
 
-  <v-main class="vista-contenedor">
-    <div class="vista" :class="angosto ? 'pa-5' : 'pa-8 px-10'">
-      <RouterView />
-    </div>
+        <v-col cols="12" md="9" class="pa-4 pa-md-8">
+          <RouterView />
+        </v-col>
+      </v-row>
+    </v-container>
   </v-main>
 </template>
 
 <style scoped>
-.barra-superior,
-.menu-lateral {
-  border-color: rgb(var(--v-theme-oro-oscuro)) !important;
-}
-
-/* ---------- Barra superior ---------- */
-.barra {
-  width: 100%;
-  display: grid;
-  grid-template-columns: 1fr auto 1fr;
-  align-items: center;
-  padding: 0 20px;
-}
-
-.barra .v-btn {
-  justify-self: start;
+.barra-superior {
+  border-bottom: 1px solid rgb(var(--v-theme-oro-oscuro));
 }
 
 .marca {
   font-family: var(--fuente-titulo);
   font-weight: 700;
-  font-size: 1.15rem;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: rgb(var(--v-theme-primary));
@@ -132,13 +117,21 @@ const enlaces = computed(() =>
 }
 
 .usuario {
-  justify-self: end;
   font-family: var(--fuente-titulo);
   color: rgb(var(--v-theme-secondary));
   letter-spacing: 0.08em;
 }
 
-/* ---------- Pestañas ---------- */
+.vista-contenedor {
+  background: rgb(var(--v-theme-azul-profundo));
+}
+
+/* ---------- Menú ---------- */
+.menu {
+  background: rgb(var(--v-theme-azul-noche));
+  border-bottom: 1px solid rgb(var(--v-theme-oro-oscuro));
+}
+
 .icono {
   width: 22px;
   height: 22px;
@@ -150,32 +143,16 @@ const enlaces = computed(() =>
 }
 
 .tab {
-  padding: 8px 20px;
   font-family: var(--fuente-titulo);
   font-weight: 600;
   letter-spacing: 0.12em;
-  text-transform: uppercase;
-  border-left: 3px solid transparent;
+  color: rgb(var(--v-theme-on-background));
+  border-bottom: 3px solid transparent;
 }
 
-.tab.v-list-item--active {
+.tab.v-btn--active {
   color: rgb(var(--v-theme-secondary));
-  border-left-color: rgb(var(--v-theme-primary));
-  background: linear-gradient(90deg, rgba(200, 170, 110, 0.18), transparent);
-}
-
-.tab :deep(.v-list-item__prepend > .icono) {
-  margin-right: 12px;
-}
-
-.tabs-superiores {
-  width: 100%;
-  border-top: 1px solid rgb(var(--v-theme-oro-oscuro));
-  font-size: 0.8rem;
-}
-
-/* ---------- Contenido ---------- */
-.vista-contenedor {
-  background: rgb(var(--v-theme-azul-profundo));
+  border-bottom-color: rgb(var(--v-theme-primary));
+  background: rgba(200, 170, 110, 0.14);
 }
 </style>

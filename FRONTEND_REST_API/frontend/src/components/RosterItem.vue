@@ -161,8 +161,9 @@ function alAsignar() {
 
         <p v-if="!ordenados.length" class="aviso">Este roster aún no tiene jugadores.</p>
 
-        <div v-else class="jugadores">
-          <v-sheet v-for="j in ordenados" :key="j.id" class="miembro" color="azul-noche" border>
+        <v-row v-else dense>
+          <v-col v-for="j in ordenados" :key="j.id" cols="12" sm="6" lg="4">
+          <v-sheet class="miembro h-100" color="azul-noche" border>
             <v-btn
               v-if="editable"
               icon
@@ -197,7 +198,8 @@ function alAsignar() {
               {{ j.rol_en_roster }}
             </v-chip>
           </v-sheet>
-        </div>
+          </v-col>
+        </v-row>
 
         <v-btn
           v-if="editable"
@@ -351,12 +353,6 @@ function alAsignar() {
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: rgb(var(--v-theme-primary));
-}
-
-.jugadores {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
-  gap: 12px;
 }
 
 .miembro {

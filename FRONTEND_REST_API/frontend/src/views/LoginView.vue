@@ -36,8 +36,11 @@ async function enviar(evento) {
 </script>
 
 <template>
-  <v-main class="login d-flex align-center justify-center">
-    <v-card class="tarjeta pa-9 text-center" max-width="400" width="100%">
+  <v-main class="login d-flex align-center">
+    <v-container>
+      <v-row justify="center">
+        <v-col cols="12" sm="8">
+    <v-card class="tarjeta pa-9 text-center mx-auto" max-width="440">
       <span class="esquina arriba-izq"></span>
       <span class="esquina arriba-der"></span>
       <span class="esquina abajo-izq"></span>
@@ -89,6 +92,9 @@ async function enviar(evento) {
         ¿No tienes cuenta? <RouterLink :to="{ name: 'registro' }">Crear cuenta</RouterLink>
       </p>
     </v-card>
+        </v-col>
+      </v-row>
+    </v-container>
   </v-main>
 </template>
 

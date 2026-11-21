@@ -33,25 +33,21 @@ onMounted(async () => {
     <p v-if="cargando">Cargando...</p>
     <v-alert v-else-if="error" type="error">{{ error }}</v-alert>
 
-    <div v-else class="rejilla">
-      <v-card v-for="g in grupos" :key="g.ruta" class="grupo pa-5">
+    <v-row v-else>
+      <v-col v-for="g in grupos" :key="g.ruta" cols="12" sm="6" lg="4">
+      <v-card class="grupo pa-5 h-100">
         <h3>{{ g.titulo }}</h3>
         <code>GET {{ g.ruta }}</code>
         <v-list class="valores pa-0" bg-color="transparent">
           <v-list-item v-for="v in g.valores" :key="v" :title="v" class="valor" />
         </v-list>
       </v-card>
-    </div>
+      </v-col>
+    </v-row>
   </section>
 </template>
 
 <style scoped>
-.rejilla {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
-  gap: 20px;
-}
-
 .grupo {
   background: linear-gradient(180deg, rgb(var(--v-theme-surface)), rgb(var(--v-theme-azul-profundo)));
   border: 1px solid rgb(var(--v-theme-oro-oscuro));
